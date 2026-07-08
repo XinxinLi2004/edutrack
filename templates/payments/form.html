@@ -1,0 +1,80 @@
+{% include "partials/header.html" %}
+
+<div class="top-bar">
+  <div>
+    <h1 class="page-title">{% if payment.id %}编辑缴费{% else %}新增缴费{% endif %}</h1>
+    <p class="page-subtitle">记录学员缴费情况</p>
+  </div>
+</div>
+
+<form method="post" action="{% if payment.id %}/payments/{{ payment.id }}{% else %}/payments{% endif %}" class="form-card">
+  <div class="form-grid">
+    <div class="form-group">
+      <label class="form-label">学员 *</label>
+      <select name="student_id" class="form-select" required>
+        <option value="">请选择学员</option>
+        {% for student in students %}
+          <option value="{{ student.id }}" {% if student.id == payment.student_id %}selected{% endif %}>{{ student.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    
+    <div class="form-group">
+      <label class="form-label">班级</label>
+      <select name="class_id" class="form-select">
+        <option value="">请选择班级</option>
+        {% for class in classes %}
+          <option value="{{ class.id }}" {% if class.id == payment.class_id %}selected{% endif %}>{{ class.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    
+    <div class="form-group">
+      <label class="form-label">金额 *</label>
+      <input type="number" name="amount" class="form-input" required value="{{ payment.amount }}" step="0.01" placeholder="例如：3000">
+    </div>
+    
+    <div class="form-group">
+      <label class="form-label">类型</label>
+      <select name="type" class="form-select">
+        <option value="tuition" {% if payment.type == 'tuition' %}selected{% endif %}>学费</option>
+        <option value="material" {% if payment.type == 'material' %}selected{% endif %}>教材费</option>
+        <option value="other" {% if payment.type == 'other' %}selected{% endif %}>其他</option>
+      </select>
+    </div>
+    
+    <div class="form-group">
+      <label class="form-label">状态</label>
+      <select name="status" class="form-select">
+        <option value="paid" {% if payment.status == 'paid' %}selected{% endif %}>已缴</option>
+        <option value="unpaid" {% if payment.status == 'unpaid' %}selected{% endif %}>未缴</option>
+        <option value="overdue" {% if payment.status == 'overdue' %}selected{% endif %}>逾期</option>
+      </select>
+    </div>
+    
+    <div class="form-group">
+      <label class="form-label">缴费日期</label>
+      <input type="date" name="paid_at" class="form-input" value="{{ payment.paid_at }}">
+    </div>
+    
+    <div class="form-group">
+      <label class="form-label">截止日期</label>
+      <input type="date" name="due_date" class="form-input" value="{{ payment.due_date }}">
+    </div>
+  </div>
+  
+  <div class="form-group">
+    <label class="form-label">备注</label>
+    <textarea name="note" class="form-textarea" placeholder="缴费说明">{{ payment.note }}</textarea>
+  </div>
+  
+  <div class="flex items-center gap-4 mt-4">
+    <button type="submit" class="btn btn-primary">
+      <svg class="icon"><use href="#icon-plus"/></svg>
+      {% if payment.id %}保存修改{% else %}确认添加{% endif %}
+    </button>
+    <a href="/payments" class="btn btn-secondary">取消</a>
+  </div>
+</form>
+
+{% include "partials/footer.html" %}

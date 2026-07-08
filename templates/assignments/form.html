@@ -1,0 +1,55 @@
+{% include "partials/header.html" %}
+
+<div class="top-bar">
+  <div>
+    <h1 class="page-title">{% if assignment.id %}编辑作业{% else %}新增作业{% endif %}</h1>
+    <p class="page-subtitle">布置班级作业并设置截止日期</p>
+  </div>
+</div>
+
+<form method="post" action="{% if assignment.id %}/assignments/{{ assignment.id }}{% else %}/assignments{% endif %}" class="form-card">
+  <div class="form-grid">
+    <div class="form-group">
+      <label class="form-label">作业标题 *</label>
+      <input type="text" name="title" class="form-input" required value="{{ assignment.title }}" placeholder="例如：力学综合练习">
+    </div>
+    
+    <div class="form-group">
+      <label class="form-label">所属班级 *</label>
+      <select name="class_id" class="form-select" required>
+        <option value="">请选择班级</option>
+        {% for class in classes %}
+          <option value="{{ class.id }}" {% if class.id == assignment.class_id %}selected{% endif %}>{{ class.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    
+    <div class="form-group">
+      <label class="form-label">截止日期</label>
+      <input type="date" name="deadline" class="form-input" value="{{ assignment.deadline }}">
+    </div>
+    
+    <div class="form-group">
+      <label class="form-label">状态</label>
+      <select name="status" class="form-select">
+        <option value="active" {% if assignment.status == 'active' %}selected{% endif %}>进行中</option>
+        <option value="completed" {% if assignment.status == 'completed' %}selected{% endif %}>已结束</option>
+      </select>
+    </div>
+  </div>
+  
+  <div class="form-group">
+    <label class="form-label">作业内容</label>
+    <textarea name="content" class="form-textarea" placeholder="作业详细要求、题目范围等">{{ assignment.content }}</textarea>
+  </div>
+  
+  <div class="flex items-center gap-4 mt-4">
+    <button type="submit" class="btn btn-primary">
+      <svg class="icon"><use href="#icon-plus"/></svg>
+      {% if assignment.id %}保存修改{% else %}确认添加{% endif %}
+    </button>
+    <a href="/assignments" class="btn btn-secondary">取消</a>
+  </div>
+</form>
+
+{% include "partials/footer.html" %}

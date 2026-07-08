@@ -1,0 +1,72 @@
+{% include "partials/header.html" %}
+
+<div class="top-bar">
+  <div>
+    <h1 class="page-title">{% if class_obj.id %}编辑班级{% else %}新增班级{% endif %}</h1>
+    <p class="page-subtitle">设置班级基本信息和人数上限</p>
+  </div>
+</div>
+
+<form method="post" action="{% if class_obj.id %}/classes/{{ class_obj.id }}{% else %}/classes{% endif %}" class="form-card">
+  <div class="form-grid">
+    <div class="form-group">
+      <label class="form-label">班级名称 *</label>
+      <input type="text" name="name" class="form-input" required value="{{ class_obj.name }}" placeholder="例如：新高一物理理优班">
+    </div>
+    
+    <div class="form-group">
+      <label class="form-label">级次 *</label>
+      <input type="text" name="cohort" class="form-input" required value="{{ class_obj.cohort }}" placeholder="例如：26">
+      <div class="form-hint">该班级面向的入学级次，如 26 级</div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">当前年级</label>
+      <select name="grade" class="form-select">
+        <option value="">请选择</option>
+        <option value="初三" {% if class_obj.grade == '初三' %}selected{% endif %}>初三</option>
+        <option value="高一" {% if class_obj.grade == '高一' %}selected{% endif %}>高一</option>
+        <option value="高二" {% if class_obj.grade == '高二' %}selected{% endif %}>高二</option>
+        <option value="高三" {% if class_obj.grade == '高三' %}selected{% endif %}>高三</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">科目</label>
+      <input type="text" name="subject" class="form-input" value="{{ class_obj.subject }}" placeholder="例如：物理">
+    </div>
+    
+    <div class="form-group">
+      <label class="form-label">人数上限</label>
+      <input type="number" name="max_students" class="form-input" value="{% if class_obj.max_students %}{{ class_obj.max_students }}{% else %}20{% endif %}" placeholder="20">
+    </div>
+    
+    <div class="form-group">
+      <label class="form-label">授课教师</label>
+      <input type="text" name="teacher_name" class="form-input" value="{{ class_obj.teacher_name }}" placeholder="教师姓名">
+    </div>
+    
+    <div class="form-group">
+      <label class="form-label">状态</label>
+      <select name="status" class="form-select">
+        <option value="active" {% if class_obj.status == 'active' %}selected{% endif %}>正常</option>
+        <option value="inactive" {% if class_obj.status == 'inactive' %}selected{% endif %}>已结课</option>
+      </select>
+    </div>
+  </div>
+  
+  <div class="form-group">
+    <label class="form-label">班级描述</label>
+    <textarea name="description" class="form-textarea" placeholder="班级介绍、教学目标等">{{ class_obj.description }}</textarea>
+  </div>
+  
+  <div class="flex items-center gap-4 mt-4">
+    <button type="submit" class="btn btn-primary">
+      <svg class="icon"><use href="#icon-plus"/></svg>
+      {% if class_obj.id %}保存修改{% else %}确认添加{% endif %}
+    </button>
+    <a href="/classes" class="btn btn-secondary">取消</a>
+  </div>
+</form>
+
+{% include "partials/footer.html" %}

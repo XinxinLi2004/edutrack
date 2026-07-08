@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# macOS
+.DS_Store
+._*
+
+# IDE
+.workbuddy/
+.vscode/
+.idea/
+
+# Database backups
+data/*.bak.*
+*.db-journal
+
+# Temp files
+*.tmp
+/tmp/

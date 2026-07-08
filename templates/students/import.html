@@ -1,0 +1,75 @@
+{% include "partials/header.html" %}
+
+<div class="top-bar">
+  <div>
+    <h1 class="page-title">批量导入学员</h1>
+    <p class="page-subtitle">粘贴 CSV 格式数据，支持姓名、年级、级、学校、手机等字段</p>
+  </div>
+</div>
+
+<div class="card" style="margin-bottom: 24px;">
+  <div class="section-title">导入格式说明</div>
+  <p style="color: var(--text-secondary); margin-bottom: 12px;">第一行为表头，支持以下列名（可只填部分）：</p>
+  <code style="display: block; background: var(--bg-secondary); padding: 12px; border-radius: var(--radius); font-size: 0.85rem;">
+    姓名,年级,级,学校,手机,家长电话,微信,地址,备注
+  </code>
+  <p style="color: var(--text-muted); margin-top: 12px; font-size: 0.85rem;">示例：张三,高一,26,合肥一中,13800138000,13900139000,wx_zhangsan,蜀山区,...</p>
+</div>
+
+{% if preview %}
+<div class="table-card" style="margin-bottom: 24px;">
+  <div class="table-header">
+    <div class="table-title">数据预览（共 {{ preview|length }} 行）</div>
+  </div>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>行号</th>
+        <th>姓名</th>
+        <th>级次</th>
+        <th>年级</th>
+        <th>学校</th>
+        <th>手机</th>
+        <th>状态</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in preview %}
+      <tr>
+        <td>{{ row.line }}</td>
+        <td>{{ row.name }}</td>
+        <td>{{ row.cohort }}</td>
+        <td>{{ row.grade }}</td>
+        <td>{{ row.school }}</td>
+        <td>{{ row.phone }}</td>
+        <td>
+          {% if row.valid %}
+            <span class="badge badge-green">有效</span>
+          {% else %}
+            <span class="badge badge-red">缺少姓名</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+<form method="post" action="{% if preview %}/students/import{% else %}/students/import-preview{% endif %}" class="form-card">
+  <div class="form-group">
+    <label class="form-label">CSV 数据</label>
+    <textarea name="csv_data" class="form-textarea" rows="12" placeholder="粘贴学员数据...">{{ csv_data }}</textarea>
+  </div>
+  <div class="flex items-center gap-4 mt-4">
+    {% if preview %}
+      <button type="submit" class="btn btn-primary">确认导入</button>
+      <a href="/students/import" class="btn btn-secondary">重新编辑</a>
+    {% else %}
+      <button type="submit" class="btn btn-primary">预览数据</button>
+    {% endif %}
+    <a href="/students" class="btn btn-secondary">取消</a>
+  </div>
+</form>
+
+{% include "partials/footer.html" %}

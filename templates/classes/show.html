@@ -1,0 +1,177 @@
+{% include "partials/header.html" %}
+
+<div class="top-bar">
+  <div>
+    <h1 class="page-title">{{ class_obj.name }}</h1>
+    <p class="page-subtitle">班级详情、学员名单与课程安排</p>
+  </div>
+  <div class="top-actions">
+    <a href="/classes/{{ class_obj.id }}/edit" class="btn btn-secondary">
+      <svg class="icon"><use href="#icon-edit"/></svg>
+      编辑
+    </a>
+    <a href="/classes" class="btn btn-secondary">返回列表</a>
+  </div>
+</div>
+
+<div class="detail-grid">
+  <div class="detail-section">
+    <div class="section-title">班级信息</div>
+    <div class="detail-row">
+      <span class="detail-label">班级名称</span>
+      <span class="detail-value">{{ class_obj.name }}</span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">级次</span>
+      <span class="detail-value">{{ class_obj.cohort }}级</span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">年级</span>
+      <span class="detail-value">{{ class_obj.grade }}</span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">科目</span>
+      <span class="detail-value">{{ class_obj.subject }}</span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">授课教师</span>
+      <span class="detail-value">{{ class_obj.teacher_name }}</span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">人数上限</span>
+      <span class="detail-value">{{ class_obj.max_students }} 人</span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">状态</span>
+      <span class="detail-value">
+        {% if class_obj.status == 'active' %}
+          <span class="badge badge-green">正常</span>
+        {% else %}
+          <span class="badge badge-gray">已结课</span>
+        {% endif %}
+      </span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">描述</span>
+      <span class="detail-value">{{ class_obj.description }}</span>
+    </div>
+  </div>
+  
+  <div class="detail-section">
+    <div class="section-title" style="display: flex; justify-content: space-between; align-items: center;">
+      <span>班级学员</span>
+      <span class="badge badge-blue">{{ students|length }} 人</span>
+    </div>
+    
+    {% if students %}
+      <table class="data-table" style="margin: 0 -24px; width: calc(100% + 48px);">
+        <thead>
+          <tr>
+            <th>姓名</th>
+            <th>联系电话</th>
+            <th>加入时间</th>
+            <th style="text-align: right;">操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for student in students %}
+          <tr>
+            <td>{{ student.name }}</td>
+            <td>{{ student.phone }}</td>
+            <td>{{ student.join_date }}</td>
+            <td style="text-align: right;">
+              <form action="/classes/{{ class_obj.id }}/students" method="post" style="display: inline;">
+                <input type="hidden" name="action" value="remove">
+                <input type="hidden" name="student_id" value="{{ student.id }}">
+                <button type="submit" class="btn btn-sm btn-danger">移出</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <div class="empty-state" style="padding: 30px 0;">
+        <p>暂无学员</p>
+      </div>
+    {% endif %}
+    
+    <form action="/classes/{{ class_obj.id }}/students" method="post" class="flex items-center gap-2" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-color);">
+      <input type="hidden" name="action" value="add">
+      <input type="text" name="student_name" class="form-input" placeholder="搜索学员姓名添加..." list="students-list" style="flex: 1;" required>
+      <datalist id="students-list">
+        {% for s in all_students %}
+          <option value="{{ s.name }}" data-id="{{ s.id }}">{{ s.name }} · {{ s.cohort }}级 · {{ s.grade }}</option>
+        {% endfor %}
+      </datalist>
+      <input type="hidden" name="student_id" id="selected-student-id">
+      <button type="submit" class="btn btn-primary">添加</button>
+    </form>
+
+    <script>
+    document.querySelector('input[name="student_name"]').addEventListener('input', function() {
+      const name = this.value;
+      const options = document.querySelectorAll('#students-list option');
+      let foundId = '';
+      options.forEach(opt => {
+        if (opt.value === name) {
+          foundId = opt.dataset.id;
+        }
+      });
+      document.getElementById('selected-student-id').value = foundId || '';
+    });
+    </script>
+  </div>
+  
+  <div class="detail-section" style="grid-column: 1 / -1;">
+    <div class="section-title" style="display: flex; justify-content: space-between; align-items: center;">
+      <span>课程安排</span>
+      <a href="/courses/new?class_id={{ class_obj.id }}" class="btn btn-sm btn-primary">新增课程</a>
+    </div>
+    
+    {% if courses %}
+      <table class="data-table" style="margin: 0 -24px; width: calc(100% + 48px);">
+        <thead>
+          <tr>
+            <th>课程标题</th>
+            <th>上课时间</th>
+            <th>时长</th>
+            <th>地点</th>
+            <th>状态</th>
+            <th style="text-align: right;">操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for course in courses %}
+          <tr data-href="/courses/{{ course.id }}">
+            <td>{{ course.title }}</td>
+            <td>{{ course.scheduled_at }}</td>
+            <td>{{ course.duration }} 分钟</td>
+            <td>{{ course.location }}</td>
+            <td>
+              {% if course.status == 'completed' %}
+                <span class="badge badge-green">已完成</span>
+              {% endif %}
+              {% if course.status == 'cancelled' %}
+                <span class="badge badge-red">已取消</span>
+              {% endif %}
+              {% if course.status == 'planned' %}
+                <span class="badge badge-blue">计划中</span>
+              {% endif %}
+            </td>
+            <td style="text-align: right;">
+              <a href="/courses/{{ course.id }}/edit" class="btn btn-sm btn-secondary">编辑</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <div class="empty-state" style="padding: 30px 0;">
+        <p>暂无课程安排</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+{% include "partials/footer.html" %}

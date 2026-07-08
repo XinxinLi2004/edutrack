@@ -1,0 +1,72 @@
+{% include "partials/header.html" %}
+
+<div class="top-bar">
+  <div>
+    <h1 class="page-title">{% if grade.id %}编辑成绩{% else %}新增成绩{% endif %}</h1>
+    <p class="page-subtitle">录入学员考试成绩</p>
+  </div>
+</div>
+
+<form method="post" action="{% if grade.id %}/grades/{{ grade.id }}{% else %}/grades{% endif %}" class="form-card">
+  <div class="form-grid">
+    <div class="form-group">
+      <label class="form-label">学员 *</label>
+      <select name="student_id" class="form-select" required>
+        <option value="">请选择学员</option>
+        {% for student in students %}
+          <option value="{{ student.id }}" {% if student.id == grade.student_id %}selected{% endif %}>{{ student.name }} · {{ student.grade }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    
+    <div class="form-group">
+      <label class="form-label">班级</label>
+      <select name="class_id" class="form-select">
+        <option value="">请选择班级</option>
+        {% for class in classes %}
+          <option value="{{ class.id }}" {% if class.id == grade.class_id %}selected{% endif %}>{{ class.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    
+    <div class="form-group">
+      <label class="form-label">考试名称 *</label>
+      <input type="text" name="exam_name" class="form-input" required value="{{ grade.exam_name }}" placeholder="例如：高二下学期期末">
+    </div>
+    
+    <div class="form-group">
+      <label class="form-label">科目</label>
+      <input type="text" name="subject" class="form-input" value="{{ grade.subject }}" placeholder="例如：物理">
+    </div>
+    
+    <div class="form-group">
+      <label class="form-label">得分 *</label>
+      <input type="number" name="score" class="form-input" required value="{{ grade.score }}" step="0.1" placeholder="0-100">
+    </div>
+    
+    <div class="form-group">
+      <label class="form-label">满分</label>
+      <input type="number" name="max_score" class="form-input" value="{% if grade.max_score %}{{ grade.max_score }}{% else %}100{% endif %}" step="0.1" placeholder="100">
+    </div>
+    
+    <div class="form-group">
+      <label class="form-label">考试日期</label>
+      <input type="date" name="exam_date" class="form-input" value="{{ grade.exam_date }}">
+    </div>
+  </div>
+  
+  <div class="form-group">
+    <label class="form-label">备注</label>
+    <textarea name="note" class="form-textarea" placeholder="考试情况说明">{{ grade.note }}</textarea>
+  </div>
+  
+  <div class="flex items-center gap-4 mt-4">
+    <button type="submit" class="btn btn-primary">
+      <svg class="icon"><use href="#icon-plus"/></svg>
+      {% if grade.id %}保存修改{% else %}确认添加{% endif %}
+    </button>
+    <a href="/grades" class="btn btn-secondary">取消</a>
+  </div>
+</form>
+
+{% include "partials/footer.html" %}

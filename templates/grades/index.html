@@ -1,0 +1,136 @@
+{% include "partials/header.html" %}
+
+<div class="top-bar">
+  <div>
+    <h1 class="page-title">成绩管理</h1>
+    <p class="page-subtitle">按班级分组管理，支持 Excel/CSV 导入导出</p>
+  </div>
+  <div class="top-actions">
+    <a href="/grades/import" class="btn btn-secondary">导入成绩</a>
+    <a href="/grades/export?class_id={{ selected_class_id }}&exam_name={{ exam_name }}" class="btn btn-secondary">导出成绩</a>
+    <a href="/grades/new" class="btn btn-primary">
+      <svg class="icon"><use href="#icon-plus"/></svg>
+      新增成绩
+    </a>
+  </div>
+</div>
+
+<div class="filter-bar">
+  <form method="get" class="flex items-center gap-2" style="flex-wrap: wrap;">
+    <select name="class_id" class="filter-input">
+      <option value="">全部班级</option>
+      {% for class in classes %}
+        <option value="{{ class.id }}" {% if class.id == selected_class_id %}selected{% endif %}>{{ class.name }}</option>
+      {% endfor %}
+    </select>
+    <input type="text" name="exam_name" class="filter-input" placeholder="考试名称" value="{{ exam_name }}">
+    <button type="submit" class="btn btn-secondary">筛选</button>
+  </form>
+</div>
+
+<div class="card-grid" style="grid-template-columns: 3fr 1fr;">
+  <div class="table-card" style="margin: 0;">
+    <div class="table-header">
+      <div class="table-title">成绩列表</div>
+    </div>
+
+    {% if grouped_grades %}
+      {% for group in grouped_grades %}
+      <div style="padding: 16px 24px; background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); font-weight: 700; color: var(--text-primary);">
+        📚 {{ group.class_name }}
+      </div>
+      <table class="data-table" style="margin-bottom: 16px;">
+        <thead>
+          <tr>
+            <th>学员</th>
+            <th>考试名称</th>
+            <th>科目</th>
+            <th>分数</th>
+            <th>等级</th>
+            <th>考试日期</th>
+            <th style="text-align: right;">操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for grade in group.grades %}
+          <tr>
+            <td>{{ grade.student_name }}</td>
+            <td>{{ grade.exam_name }}</td>
+            <td>{{ grade.subject }}</td>
+            <td style="font-weight: 700;">{{ grade.score }}/{{ grade.max_score }}</td>
+            <td>
+              {% if grade.level == 'excellent' %}
+                <span class="badge badge-green">优秀</span>
+              {% endif %}
+              {% if grade.level == 'pass' %}
+                <span class="badge badge-blue">及格</span>
+              {% endif %}
+              {% if grade.level == 'fail' %}
+                <span class="badge badge-red">不及格</span>
+              {% endif %}
+            </td>
+            <td>{{ grade.exam_date }}</td>
+            <td style="text-align: right;">
+              <a href="/grades/{{ grade.id }}/edit" class="btn btn-sm btn-secondary" style="margin-right: 8px;">
+                <svg class="icon"><use href="#icon-edit"/></svg>
+              </a>
+              <form action="/grades/{{ grade.id }}/delete" method="post" style="display: inline;" data-confirm="确定删除该成绩吗？">
+                <button type="submit" class="btn btn-sm btn-danger">
+                  <svg class="icon"><use href="#icon-trash"/></svg>
+                </button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% endfor %}
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">📊</div>
+      <h3>暂无成绩</h3>
+      <p>点击右上角新增按钮录入成绩，或使用导入功能批量添加</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="card" style="margin: 0;">
+    <div class="section-title">成绩统计</div>
+    <div style="margin-bottom: 16px;">
+      <div style="color: var(--text-secondary); font-size: 0.85rem;">平均分</div>
+      <div style="font-size: 1.5rem; font-weight: 800; color: var(--primary-color);">{{ stats.avg_score|default:'-' }}</div>
+    </div>
+    <div style="margin-bottom: 16px;">
+      <div style="color: var(--text-secondary); font-size: 0.85rem;">最高分</div>
+      <div style="font-size: 1.5rem; font-weight: 800; color: var(--success-color);">{{ stats.max_score|default:'-' }}</div>
+    </div>
+    <div style="margin-bottom: 16px;">
+      <div style="color: var(--text-secondary); font-size: 0.85rem;">最低分</div>
+      <div style="font-size: 1.5rem; font-weight: 800; color: var(--danger-color);">{{ stats.min_score|default:'-' }}</div>
+    </div>
+    <div>
+      <div style="color: var(--text-secondary); font-size: 0.85rem;">参考人数</div>
+      <div style="font-size: 1.5rem; font-weight: 800; color: var(--text-primary);">{{ stats.count|default:'0' }}</div>
+    </div>
+  </div>
+</div>
+
+<div class="card" style="margin-top: 24px;">
+  <div class="section-title">成绩分布</div>
+  {% if distribution %}
+    {% for item in distribution %}
+    <div class="chart-bar">
+      <div class="chart-label">{{ item.range }}</div>
+      <div class="chart-track">
+        <div class="chart-fill" style="width: {{ item.percentage }}%;">{{ item.count }}</div>
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+    <div class="empty-state" style="padding: 30px 0;">
+      <p>暂无分布数据</p>
+    </div>
+  {% endif %}
+</div>
+
+{% include "partials/footer.html" %}

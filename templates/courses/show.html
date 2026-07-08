@@ -1,0 +1,125 @@
+{% include "partials/header.html" %}
+
+<div class="top-bar">
+  <div>
+    <h1 class="page-title">{{ course.title }}</h1>
+    <p class="page-subtitle">{{ course.class_name }} · {{ course.scheduled_at }}</p>
+  </div>
+  <div class="top-actions">
+    <a href="/courses/{{ course.id }}/edit" class="btn btn-secondary">
+      <svg class="icon"><use href="#icon-edit"/></svg>
+      编辑课程
+    </a>
+    <a href="/courses" class="btn btn-secondary">返回列表</a>
+  </div>
+</div>
+
+<div class="detail-grid">
+  <div class="detail-section">
+    <div class="section-title">课程信息</div>
+    <div class="detail-row">
+      <span class="detail-label">课程标题</span>
+      <span class="detail-value">{{ course.title }}</span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">所属班级</span>
+      <span class="detail-value">{{ course.class_name }}</span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">上课时间</span>
+      <span class="detail-value">{{ course.scheduled_at }}</span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">上课方式</span>
+      <span class="detail-value">
+        {% if course.mode == 'online' %}
+          <span class="badge badge-purple">线上</span>
+        {% endif %}
+        {% if course.mode == 'offline' %}
+          <span class="badge badge-gray">线下</span>
+        {% endif %}
+        {% if course.mode == 'hybrid' %}
+          <span class="badge badge-blue">线上线下同步</span>
+        {% endif %}
+      </span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">时长</span>
+      <span class="detail-value">{{ course.duration }} 分钟</span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">地点 / 链接</span>
+      <span class="detail-value">{{ course.location }}</span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">状态</span>
+      <span class="detail-value">
+        {% if course.status == 'completed' %}
+          <span class="badge badge-green">已完成</span>
+        {% endif %}
+        {% if course.status == 'cancelled' %}
+          <span class="badge badge-red">已取消</span>
+        {% endif %}
+        {% if course.status == 'planned' %}
+          <span class="badge badge-blue">计划中</span>
+        {% endif %}
+      </span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">描述</span>
+      <span class="detail-value">{{ course.description }}</span>
+    </div>
+  </div>
+  
+  <div class="detail-section" style="grid-column: 1 / -1;">
+    <div class="section-title">出勤签到</div>
+    <form action="/courses/{{ course.id }}/attendance" method="post">
+      <table class="data-table" style="margin: 0 -24px; width: calc(100% + 48px);">
+        <thead>
+          <tr>
+            <th>学员姓名</th>
+            <th>出勤状态</th>
+            <th>参与方式</th>
+            <th>备注</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for student in students %}
+          <tr>
+            <td>{{ student.name }}</td>
+            <td>
+              <select name="status_{{ student.id }}" class="form-select" style="width: auto;">
+                <option value="present" {% if student.attendance.status == 'present' %}selected{% endif %}>出勤</option>
+                <option value="online" {% if student.attendance.status == 'online' %}selected{% endif %}>线上参与</option>
+                <option value="absent" {% if student.attendance.status == 'absent' %}selected{% endif %}>缺勤</option>
+                <option value="late" {% if student.attendance.status == 'late' %}selected{% endif %}>迟到</option>
+                <option value="leave" {% if student.attendance.status == 'leave' %}selected{% endif %}>请假</option>
+              </select>
+            </td>
+            <td>
+              <select name="mode_{{ student.id }}" class="form-select" style="width: auto;">
+                <option value="offline" {% if student.attendance.mode == 'offline' %}selected{% endif %}>线下</option>
+                <option value="online" {% if student.attendance.mode == 'online' %}selected{% endif %}>线上</option>
+              </select>
+            </td>
+            <td>
+              <input type="text" name="note_{{ student.id }}" class="form-input" value="{{ student.attendance.note }}" placeholder="备注">
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% if students %}
+      <div class="mt-4">
+        <button type="submit" class="btn btn-primary">保存出勤</button>
+      </div>
+      {% else %}
+      <div class="empty-state" style="padding: 30px 0;">
+        <p>该班级暂无学员，请先添加学员</p>
+      </div>
+      {% endif %}
+    </form>
+  </div>
+</div>
+
+{% include "partials/footer.html" %}

@@ -1,0 +1,39 @@
+{% include "partials/header.html" %}
+
+<div class="top-bar">
+  <div>
+    <h1 class="page-title">导入成绩</h1>
+    <p class="page-subtitle">粘贴 CSV 格式成绩数据，系统按姓名匹配学员</p>
+  </div>
+</div>
+
+<div class="card" style="margin-bottom: 24px;">
+  <div class="section-title">导入格式说明</div>
+  <p style="color: var(--text-secondary); margin-bottom: 12px;">第一行为表头，支持以下列名：</p>
+  <code style="display: block; background: var(--bg-secondary); padding: 12px; border-radius: var(--radius); font-size: 0.85rem;">
+    学员姓名,班级,考试名称,科目,得分,满分,考试日期,备注
+  </code>
+  <p style="color: var(--text-muted); margin-top: 12px; font-size: 0.85rem;">“班级”列可填班级名称，系统会自动匹配；也可先选择默认班级。</p>
+</div>
+
+<form method="post" action="/grades/import" class="form-card">
+  <div class="form-group">
+    <label class="form-label">默认班级（可选）</label>
+    <select name="class_id" class="form-select">
+      <option value="">不指定</option>
+      {% for class in classes %}
+        <option value="{{ class.id }}">{{ class.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="form-group">
+    <label class="form-label">CSV 数据</label>
+    <textarea name="csv_data" class="form-textarea" rows="12" placeholder="粘贴成绩数据..."></textarea>
+  </div>
+  <div class="flex items-center gap-4 mt-4">
+    <button type="submit" class="btn btn-primary">确认导入</button>
+    <a href="/grades" class="btn btn-secondary">取消</a>
+  </div>
+</form>
+
+{% include "partials/footer.html" %}

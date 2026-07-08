@@ -1,0 +1,106 @@
+{% include "partials/header.html" %}
+
+<div class="top-bar">
+  <div>
+    <h1 class="page-title">仪表盘</h1>
+    <p class="page-subtitle">欢迎回来，今日教务概览</p>
+  </div>
+  <div class="top-actions">
+    <div class="theme-toggle">
+      <button class="theme-btn" data-theme="light" title="浅色">☀️</button>
+      <button class="theme-btn" data-theme="system" title="跟随系统">🖥️</button>
+      <button class="theme-btn" data-theme="dark" title="深色">🌙</button>
+    </div>
+  </div>
+</div>
+
+<div class="card-grid">
+  <div class="card stat-card card-glass">
+    <div class="stat-icon blue">👨‍🎓</div>
+    <div class="stat-content">
+      <div class="stat-value">{{ stats.total_students }}</div>
+      <div class="stat-label">在读学员</div>
+      <div class="stat-change">持续跟进中</div>
+    </div>
+  </div>
+  
+  <div class="card stat-card card-glass">
+    <div class="stat-icon purple">🏫</div>
+    <div class="stat-content">
+      <div class="stat-value">{{ stats.total_classes }}</div>
+      <div class="stat-label">班级数量</div>
+      <div class="stat-change">正常运营</div>
+    </div>
+  </div>
+  
+  <div class="card stat-card card-glass">
+    <div class="stat-icon orange">📅</div>
+    <div class="stat-content">
+      <div class="stat-value">{{ stats.total_courses }}</div>
+      <div class="stat-label">待上课程</div>
+      <div class="stat-change">安排就绪</div>
+    </div>
+  </div>
+  
+  <div class="card stat-card card-glass">
+    <div class="stat-icon green">💰</div>
+    <div class="stat-content">
+      <div class="stat-value">¥{{ stats.total_income }}</div>
+      <div class="stat-label">累计缴费</div>
+      <div class="stat-change">财务健康</div>
+    </div>
+  </div>
+  
+  <div class="card stat-card card-glass">
+    <div class="stat-icon red">⚠️</div>
+    <div class="stat-content">
+      <div class="stat-value">{{ stats.unpaid_count }}</div>
+      <div class="stat-label">待缴费单</div>
+      <div class="stat-change">及时提醒</div>
+    </div>
+  </div>
+</div>
+
+<div class="card-grid" style="grid-template-columns: 2fr 1fr;">
+  <div class="card" style="min-height: 300px;">
+    <div class="section-title">📊 教务数据一览</div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+      <div style="background: var(--bg-secondary); padding: 20px; border-radius: var(--radius); border: 1px solid var(--border-color);">
+        <div style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 8px;">本周出勤异常</div>
+        <div style="font-size: 1.75rem; font-weight: 800; color: var(--danger-color);">{{ stats.recent_absences }}</div>
+        <div style="color: var(--text-muted); font-size: 0.8rem; margin-top: 4px;">近7天缺勤记录</div>
+      </div>
+      <div style="background: var(--bg-secondary); padding: 20px; border-radius: var(--radius); border: 1px solid var(--border-color);">
+        <div style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 8px;">系统状态</div>
+        <div style="font-size: 1.75rem; font-weight: 800; color: var(--success-color);">正常</div>
+        <div style="color: var(--text-muted); font-size: 0.8rem; margin-top: 4px;">本地运行中</div>
+      </div>
+      <div style="background: var(--bg-secondary); padding: 20px; border-radius: var(--radius); border: 1px solid var(--border-color);">
+        <div style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 8px;">数据存储</div>
+        <div style="font-size: 1.75rem; font-weight: 800; color: var(--primary-color);">SQLite</div>
+        <div style="color: var(--text-muted); font-size: 0.8rem; margin-top: 4px;">本地离线可用</div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="card">
+    <div class="section-title">📅 近期课程</div>
+    {% if stats.upcoming_courses %}
+      {% for course in stats.upcoming_courses %}
+        <div style="padding: 12px 0; border-bottom: 1px solid var(--border-color);">
+          <div style="font-weight: 600; color: var(--text-primary);">{{ course.title }}</div>
+          <div style="font-size: 0.85rem; color: var(--text-secondary);">
+            {{ course.class_name }} · {{ course.scheduled_at }}
+          </div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <div class="empty-state" style="padding: 30px 0;">
+        <div class="empty-state-icon">📅</div>
+        <p>暂无近期课程</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+{% include "partials/footer.html" %}

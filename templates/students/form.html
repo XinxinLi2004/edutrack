@@ -1,0 +1,87 @@
+{% include "partials/header.html" %}
+
+<div class="top-bar">
+  <div>
+    <h1 class="page-title">{% if student.id %}编辑学员{% else %}新增学员{% endif %}</h1>
+    <p class="page-subtitle">填写学员基本信息和联系方式</p>
+  </div>
+</div>
+
+<form method="post" action="{% if student.id %}/students/{{ student.id }}{% else %}/students{% endif %}" class="form-card">
+  <div class="form-grid">
+    <div class="form-group">
+      <label class="form-label">姓名 *</label>
+      <input type="text" name="name" class="form-input" required value="{{ student.name }}" placeholder="请输入学员姓名">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">联系电话</label>
+      <input type="tel" name="phone" class="form-input" value="{{ student.phone }}" placeholder="学员手机号">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">微信号</label>
+      <input type="text" name="wechat" class="form-input" value="{{ student.wechat }}" placeholder="微信号">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">级次 *</label>
+      <input type="text" name="cohort" class="form-input" required value="{{ student.cohort }}" placeholder="例如：26（表示26级）">
+      <div class="form-hint">入学年份后两位，如 2026 年入学记为 26 级</div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">当前年级</label>
+      <select name="grade" class="form-select">
+        <option value="">请选择</option>
+        <option value="高一" {% if student.grade == '高一' %}selected{% endif %}>高一</option>
+        <option value="高二" {% if student.grade == '高二' %}selected{% endif %}>高二</option>
+        <option value="高三" {% if student.grade == '高三' %}selected{% endif %}>高三</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">学校</label>
+      <input type="text" name="school" class="form-input" value="{{ student.school }}" placeholder="就读学校">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">家长姓名</label>
+      <input type="text" name="parent_name" class="form-input" value="{{ student.parent_name }}" placeholder="家长姓名">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">家长电话</label>
+      <input type="tel" name="parent_phone" class="form-input" value="{{ student.parent_phone }}" placeholder="家长联系电话">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">状态</label>
+      <select name="status" class="form-select">
+        <option value="registered" {% if student.status == 'registered' %}selected{% endif %}>已报名</option>
+        <option value="active" {% if student.status == 'active' %}selected{% endif %}>在读</option>
+        <option value="inactive" {% if student.status == 'inactive' %}selected{% endif %}>已退学</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label class="form-label">地址</label>
+    <input type="text" name="address" class="form-input" value="{{ student.address }}" placeholder="家庭地址">
+  </div>
+
+  <div class="form-group">
+    <label class="form-label">备注</label>
+    <textarea name="note" class="form-textarea" placeholder="其他备注信息">{{ student.note }}</textarea>
+  </div>
+
+  <div class="flex items-center gap-4 mt-4">
+    <button type="submit" class="btn btn-primary">
+      <svg class="icon"><use href="#icon-plus"/></svg>
+      {% if student.id %}保存修改{% else %}确认添加{% endif %}
+    </button>
+    <a href="/students" class="btn btn-secondary">取消</a>
+  </div>
+</form>
+
+{% include "partials/footer.html" %}

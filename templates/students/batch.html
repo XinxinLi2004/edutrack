@@ -1,0 +1,175 @@
+{% include "partials/header.html" %}
+
+<div class="top-bar">
+  <div>
+    <h1 class="page-title">批量操作学员</h1>
+    <p class="page-subtitle">按条件筛选学员，再执行批量操作</p>
+  </div>
+</div>
+
+<form method="post" action="/students/batch" class="form-card" id="batch-form">
+  <div class="form-group">
+    <label class="form-label">操作类型</label>
+    <select name="action" class="form-select" id="batch-action" required>
+      <option value="">请选择</option>
+      <option value="add_to_class">批量加入班级</option>
+      <option value="update_info">批量修改信息</option>
+    </select>
+  </div>
+
+  <div id="add-to-class-panel" style="display: none;">
+    <div class="form-group">
+      <label class="form-label">目标班级</label>
+      <select name="target_class_id" class="form-select">
+        <option value="">请选择班级</option>
+        {% for class in classes %}
+          <option value="{{ class.id }}">{{ class.name }}（{{ class.cohort }}级）</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+
+  <div id="update-info-panel" style="display: none;">
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label">当前年级（留空不修改）</label>
+        <select name="new_grade" class="form-select">
+          <option value="">不修改</option>
+          <option value="高一">高一</option>
+          <option value="高二">高二</option>
+          <option value="高三">高三</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">级次（留空不修改）</label>
+        <input type="text" name="new_cohort" class="form-input" placeholder="例如：26">
+      </div>
+      <div class="form-group">
+        <label class="form-label">状态（留空不修改）</label>
+        <select name="new_status" class="form-select">
+          <option value="">不修改</option>
+          <option value="registered">已报名</option>
+          <option value="active">在读</option>
+          <option value="inactive">已退学</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">学校（留空不修改）</label>
+        <input type="text" name="new_school" class="form-input" placeholder="就读学校">
+      </div>
+    </div>
+  </div>
+
+  <div class="filter-bar" style="margin-top: 20px; margin-bottom: 0; border-bottom: 1px solid var(--border-color); padding-bottom: 16px;">
+    <div class="flex items-center gap-2" style="flex-wrap: wrap;" id="filter-controls">
+      <div class="search-box">
+        <svg class="icon" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%);"><use href="#icon-search"/></svg>
+        <input type="text" id="filter-search" class="filter-input" placeholder="搜索姓名/手机/学校" value="{{ search }}">
+      </div>
+      <select id="filter-cohort" class="filter-input">
+        <option value="">全部级次</option>
+        {% for c in cohorts %}
+          <option value="{{ c }}" {% if c == cohort %}selected{% endif %}>{{ c }}级</option>
+        {% endfor %}
+      </select>
+      <select id="filter-grade" class="filter-input">
+        <option value="">全部年级</option>
+        <option value="高一" {% if grade == '高一' %}selected{% endif %}>高一</option>
+        <option value="高二" {% if grade == '高二' %}selected{% endif %}>高二</option>
+        <option value="高三" {% if grade == '高三' %}selected{% endif %}>高三</option>
+      </select>
+      <select id="filter-status" class="filter-input">
+        <option value="">全部状态</option>
+        <option value="registered" {% if status == 'registered' %}selected{% endif %}>已报名</option>
+        <option value="active" {% if status == 'active' %}selected{% endif %}>在读</option>
+        <option value="inactive" {% if status == 'inactive' %}selected{% endif %}>已退学</option>
+      </select>
+      <button type="button" class="btn btn-secondary" onclick="applyFilter()">筛选</button>
+    </div>
+  </div>
+
+  <div class="table-card" style="margin-top: 16px;">
+    <div class="table-header">
+      <div class="table-title">选择学员</div>
+    </div>
+    <table class="data-table" id="batch-students-table">
+      <thead>
+        <tr>
+          <th style="width: 40px;"><input type="checkbox" id="select-all"></th>
+          <th>姓名</th>
+          <th>级次</th>
+          <th>当前年级</th>
+          <th>学校</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in students %}
+        <tr>
+          <td><input type="checkbox" name="student_ids" value="{{ s.id }}"></td>
+          <td>{{ s.name }}</td>
+          <td>{{ s.cohort }}级</td>
+          <td>{{ s.grade }}</td>
+          <td>{{ s.school }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="flex items-center gap-4 mt-4">
+    <button type="submit" class="btn btn-primary" id="batch-submit" disabled>确认批量操作</button>
+    <a href="/students" class="btn btn-secondary">取消</a>
+  </div>
+</form>
+
+<script>
+  // 筛选功能（替换内嵌 form，避免嵌套表单冲突）
+  function applyFilter() {
+    var params = [];
+    var s = document.getElementById('filter-search').value.trim();
+    var c = document.getElementById('filter-cohort').value;
+    var g = document.getElementById('filter-grade').value;
+    var st = document.getElementById('filter-status').value;
+    if (s) params.push('search=' + encodeURIComponent(s));
+    if (c) params.push('cohort=' + encodeURIComponent(c));
+    if (g) params.push('grade=' + encodeURIComponent(g));
+    if (st) params.push('status=' + encodeURIComponent(st));
+    var qs = params.length ? '?' + params.join('&') : '';
+    window.location.href = '/students/batch' + qs;
+  }
+
+  const actionSelect = document.getElementById('batch-action');
+  const addPanel = document.getElementById('add-to-class-panel');
+  const updatePanel = document.getElementById('update-info-panel');
+  const selectAll = document.getElementById('select-all');
+  const checkboxes = document.querySelectorAll('input[name="student_ids"]');
+  const submitBtn = document.getElementById('batch-submit');
+
+  actionSelect.addEventListener('change', function() {
+    addPanel.style.display = this.value === 'add_to_class' ? 'block' : 'none';
+    updatePanel.style.display = this.value === 'update_info' ? 'block' : 'none';
+    updateSubmit();
+  });
+
+  selectAll.addEventListener('change', function() {
+    checkboxes.forEach(cb => cb.checked = this.checked);
+    updateSubmit();
+  });
+
+  checkboxes.forEach(cb => cb.addEventListener('change', updateSubmit));
+
+  function updateSubmit() {
+    const hasAction = actionSelect.value !== '';
+    const hasSelection = Array.from(checkboxes).some(cb => cb.checked);
+    submitBtn.disabled = !(hasAction && hasSelection);
+  }
+
+  document.getElementById('batch-form').addEventListener('submit', function(e) {
+    if (!Array.from(checkboxes).some(cb => cb.checked)) {
+      e.preventDefault();
+      alert('请至少选择一名学员');
+    }
+  });
+</script>
+
+{% include "partials/footer.html" %}

@@ -1,0 +1,106 @@
+{% include "partials/header.html" %}
+
+<div class="top-bar">
+  <div>
+    <h1 class="page-title">缴费管理</h1>
+    <p class="page-subtitle">记录缴费、统计收入、提醒欠费</p>
+  </div>
+  <div class="top-actions">
+    <a href="/payments/new" class="btn btn-primary">
+      <svg class="icon"><use href="#icon-plus"/></svg>
+      新增缴费
+    </a>
+  </div>
+</div>
+
+<div class="filter-bar">
+  <form method="get" class="flex items-center gap-2" style="flex-wrap: wrap;">
+    <select name="student_id" class="filter-input">
+      <option value="">全部学员</option>
+      {% for student in students %}
+        <option value="{{ student.id }}" {% if student.id == selected_student_id %}selected{% endif %}>{{ student.name }}</option>
+      {% endfor %}
+    </select>
+    <select name="status" class="filter-input">
+      <option value="">全部状态</option>
+      <option value="paid" {% if status == 'paid' %}selected{% endif %}>已缴</option>
+      <option value="unpaid" {% if status == 'unpaid' %}selected{% endif %}>未缴</option>
+      <option value="overdue" {% if status == 'overdue' %}selected{% endif %}>逾期</option>
+    </select>
+    <button type="submit" class="btn btn-secondary">筛选</button>
+  </form>
+</div>
+
+<div class="table-card">
+  <div class="table-header">
+    <div class="table-title">缴费记录</div>
+  </div>
+  
+  {% if payments %}
+  <table class="data-table" id="payments-table">
+    <thead>
+      <tr>
+        <th>学员</th>
+        <th>班级</th>
+        <th>金额</th>
+        <th>类型</th>
+        <th>状态</th>
+        <th>缴费日期</th>
+        <th>备注</th>
+        <th style="text-align: right;">操作</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for payment in payments %}
+      <tr>
+        <td>{{ payment.student_name }}</td>
+        <td>{{ payment.class_name }}</td>
+        <td style="font-weight: 700;">¥{{ payment.amount }}</td>
+        <td>
+          {% if payment.type == 'tuition' %}
+            <span class="badge badge-blue">学费</span>
+          {% endif %}
+          {% if payment.type == 'material' %}
+            <span class="badge badge-purple">教材</span>
+          {% endif %}
+          {% if payment.type == 'other' %}
+            <span class="badge badge-gray">其他</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if payment.status == 'paid' %}
+            <span class="badge badge-green">已缴</span>
+          {% endif %}
+          {% if payment.status == 'unpaid' %}
+            <span class="badge badge-orange">未缴</span>
+          {% endif %}
+          {% if payment.status == 'overdue' %}
+            <span class="badge badge-red">逾期</span>
+          {% endif %}
+        </td>
+        <td>{{ payment.paid_at }}</td>
+        <td>{{ payment.note }}</td>
+        <td style="text-align: right;">
+          <a href="/payments/{{ payment.id }}/edit" class="btn btn-sm btn-secondary" style="margin-right: 8px;">
+            <svg class="icon"><use href="#icon-edit"/></svg>
+          </a>
+          <form action="/payments/{{ payment.id }}/delete" method="post" style="display: inline;" data-confirm="确定删除该缴费记录吗？">
+            <button type="submit" class="btn btn-sm btn-danger">
+              <svg class="icon"><use href="#icon-trash"/></svg>
+            </button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-state-icon">💰</div>
+    <h3>暂无缴费记录</h3>
+    <p>点击右上角新增按钮记录缴费</p>
+  </div>
+  {% endif %}
+</div>
+
+{% include "partials/footer.html" %}

@@ -1,0 +1,102 @@
+{% include "partials/header.html" %}
+
+<div class="top-bar">
+  <div>
+    <h1 class="page-title">课程管理</h1>
+    <p class="page-subtitle">安排课程、记录出勤情况</p>
+  </div>
+  <div class="top-actions">
+    <a href="/courses/new" class="btn btn-primary">
+      <svg class="icon"><use href="#icon-plus"/></svg>
+      新增课程
+    </a>
+  </div>
+</div>
+
+<div class="filter-bar">
+  <form method="get" class="flex items-center gap-2" style="flex-wrap: wrap;">
+    <select name="class_id" class="filter-input">
+      <option value="">全部班级</option>
+      {% for class in classes %}
+        <option value="{{ class.id }}" {% if class.id == selected_class_id %}selected{% endif %}>{{ class.name }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="btn btn-secondary">筛选</button>
+  </form>
+</div>
+
+<div class="table-card">
+  <div class="table-header">
+    <div class="table-title">课程列表</div>
+  </div>
+  
+  {% if courses %}
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>课程标题</th>
+        <th>班级</th>
+        <th>方式</th>
+        <th>上课时间</th>
+        <th>时长</th>
+        <th>地点</th>
+        <th>状态</th>
+        <th style="text-align: right;">操作</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for course in courses %}
+      <tr data-href="/courses/{{ course.id }}">
+        <td>
+          <div style="font-weight: 600; color: var(--text-primary);">{{ course.title }}</div>
+        </td>
+        <td>{{ course.class_name }}</td>
+        <td>
+          {% if course.mode == 'online' %}
+            <span class="badge badge-purple">线上</span>
+          {% endif %}
+          {% if course.mode == 'offline' %}
+            <span class="badge badge-gray">线下</span>
+          {% endif %}
+          {% if course.mode == 'hybrid' %}
+            <span class="badge badge-blue">同步</span>
+          {% endif %}
+        </td>
+        <td>{{ course.scheduled_at }}</td>
+        <td>{{ course.duration }} 分钟</td>
+        <td>{{ course.location }}</td>
+        <td>
+          {% if course.status == 'completed' %}
+            <span class="badge badge-green">已完成</span>
+          {% endif %}
+          {% if course.status == 'cancelled' %}
+            <span class="badge badge-red">已取消</span>
+          {% endif %}
+          {% if course.status == 'planned' %}
+            <span class="badge badge-blue">计划中</span>
+          {% endif %}
+        </td>
+        <td style="text-align: right;">
+          <a href="/courses/{{ course.id }}/edit" class="btn btn-sm btn-secondary" style="margin-right: 8px;">
+            <svg class="icon"><use href="#icon-edit"/></svg>
+          </a>
+          <form action="/courses/{{ course.id }}/delete" method="post" style="display: inline;" data-confirm="确定删除该课程吗？">
+            <button type="submit" class="btn btn-sm btn-danger">
+              <svg class="icon"><use href="#icon-trash"/></svg>
+            </button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-state-icon">📅</div>
+    <h3>暂无课程</h3>
+    <p>点击右上角新增按钮安排第一节课</p>
+  </div>
+  {% endif %}
+</div>
+
+{% include "partials/footer.html" %}

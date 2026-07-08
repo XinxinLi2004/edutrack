@@ -1,0 +1,102 @@
+{% include "partials/header.html" %}
+
+<div class="top-bar">
+  <div>
+    <h1 class="page-title">作业管理</h1>
+    <p class="page-subtitle">布置作业、跟踪提交情况</p>
+  </div>
+  <div class="top-actions">
+    <a href="/assignments/new" class="btn btn-primary">
+      <svg class="icon"><use href="#icon-plus"/></svg>
+      新增作业
+    </a>
+  </div>
+</div>
+
+<div class="filter-bar">
+  <form method="get" class="flex items-center gap-2" style="flex-wrap: wrap;">
+    <select name="class_id" class="filter-input">
+      <option value="">全部班级</option>
+      {% for class in classes %}
+        <option value="{{ class.id }}" {% if class.id == selected_class_id %}selected{% endif %}>{{ class.name }}</option>
+      {% endfor %}
+    </select>
+    <select name="sort" class="filter-input">
+      <option value="">默认排序</option>
+      <option value="avg_score" {% if sort_by == 'avg_score' %}selected{% endif %}>按成绩排序（高→低）</option>
+    </select>
+    <button type="submit" class="btn btn-secondary">筛选</button>
+  </form>
+</div>
+
+<div class="table-card">
+  <div class="table-header">
+    <div class="table-title">作业列表</div>
+  </div>
+  
+  {% if assignments %}
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>作业标题</th>
+        <th>班级</th>
+        <th>截止日期</th>
+        <th>提交进度</th>
+        <th>均分</th>
+        <th>状态</th>
+        <th>创建时间</th>
+        <th style="text-align: right;">操作</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for assignment in assignments %}
+      <tr data-href="/assignments/{{ assignment.id }}">
+        <td>
+          <div style="font-weight: 600; color: var(--text-primary);">{{ assignment.title }}</div>
+        </td>
+        <td>{{ assignment.class_name }}</td>
+        <td>{{ assignment.deadline }}</td>
+        <td>
+          {% if assignment.stats.total %}
+            {{ assignment.stats.submitted }}/{{ assignment.stats.total }}
+            <span class="badge badge-green">已提交</span>
+            {% if assignment.stats.late > 0 %}
+              <span class="badge badge-orange">迟交 {{ assignment.stats.late }}</span>
+            {% endif %}
+          {% else %}
+            <span class="badge badge-gray">未统计</span>
+          {% endif %}
+        </td>
+        <td style="font-weight: 700;">{% if assignment.avg_score %}{{ assignment.avg_score }}{% else %}-{% endif %}</td>
+        <td>
+          {% if assignment.status == 'active' %}
+            <span class="badge badge-blue">进行中</span>
+          {% else %}
+            <span class="badge badge-gray">已结束</span>
+          {% endif %}
+        </td>
+        <td>{{ assignment.created_at }}</td>
+        <td style="text-align: right;">
+          <a href="/assignments/{{ assignment.id }}/edit" class="btn btn-sm btn-secondary" style="margin-right: 8px;">
+            <svg class="icon"><use href="#icon-edit"/></svg>
+          </a>
+          <form action="/assignments/{{ assignment.id }}/delete" method="post" style="display: inline;" data-confirm="确定删除该作业吗？">
+            <button type="submit" class="btn btn-sm btn-danger">
+              <svg class="icon"><use href="#icon-trash"/></svg>
+            </button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-state-icon">📝</div>
+    <h3>暂无作业</h3>
+    <p>点击右上角新增按钮布置作业</p>
+  </div>
+  {% endif %}
+</div>
+
+{% include "partials/footer.html" %}

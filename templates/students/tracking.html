@@ -1,0 +1,128 @@
+{% include "partials/header.html" %}
+
+<div class="top-bar">
+  <div>
+    <h1 class="page-title">学习追踪</h1>
+    <p class="page-subtitle">{{ student.name }} · {{ student.cohort }}级 · {{ student.grade }}</p>
+  </div>
+  <div class="top-actions">
+    <a href="/students/{{ student.id }}" class="btn btn-secondary">返回学员详情</a>
+  </div>
+</div>
+
+{% if chart_data %}
+  <div class="card" style="margin-bottom: 24px;">
+    <div class="section-title">作业成绩变化趋势</div>
+    <canvas id="scoreChart" style="max-height: 350px; width: 100%;"></canvas>
+    <p style="color: var(--text-secondary); margin-top: 12px; font-size: 0.85rem;">
+      横轴为作业（按日期排列），纵轴为成绩；虚线为该学员平均分 {{ avg_score }}
+    </p>
+  </div>
+{% else %}
+  <div class="card" style="margin-bottom: 24px;">
+    <div class="empty-state" style="padding: 40px 0;">
+      <div class="empty-state-icon">📈</div>
+      <h3>暂无成绩数据</h3>
+      <p>该学员当前没有已提交的作业成绩，请在作业管理中导入成绩。</p>
+    </div>
+  </div>
+{% endif %}
+
+<div class="card">
+  <div class="section-title">成绩明细</div>
+  {% if scores %}
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>作业标题</th>
+          <th>班级</th>
+          <th>得分</th>
+          <th>日期</th>
+          <th>与均分差值</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for score in scores %}
+        <tr>
+          <td style="font-weight: 600;">{{ score.assignment_title }}</td>
+          <td>{{ score.class_name }}</td>
+          <td style="font-weight: 800; color: var(--primary-color);">{{ score.score }}</td>
+          <td>{{ score.submitted_at }}</td>
+          <td>
+            {% if score.diff > 0 %}
+              <span style="color: var(--success-color);">+{{ score.diff }}</span>
+            {% endif %}
+            {% if score.diff < 0 %}
+              <span style="color: var(--danger-color);">{{ score.diff }}</span>
+            {% endif %}
+            {% if score.diff == 0 %}
+              <span style="color: var(--text-secondary);">0</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <div class="empty-state" style="padding: 30px 0;">
+      <p>无成绩记录</p>
+    </div>
+  {% endif %}
+</div>
+
+{% if chart_data %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+  (function() {
+    var ctx = document.getElementById('scoreChart').getContext('2d');
+    var labels = [{% for item in chart_data %}'{{ item.assignment_title|truncate(10) }}'{% if not loop.last %},{% endif %}{% endfor %}];
+    var scores = [{% for item in chart_data %}{{ item.score }}{% if not loop.last %},{% endif %}{% endfor %}];
+    // Use labels as strings for x-axis
+    var avg = {{ avg_score }};
+    var avgLine = Array(labels.length).fill(avg);
+
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: '成绩',
+            data: scores,
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            fill: true,
+            tension: 0.3,
+            pointRadius: 5,
+            pointBackgroundColor: '#3b82f6'
+          },
+          {
+            label: '平均分 (' + avg + ')',
+            data: avgLine,
+            borderColor: '#f59e0b',
+            borderDash: [5, 5],
+            fill: false,
+            pointRadius: 0
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: true, position: 'top' }
+        },
+        scales: {
+          y: {
+            beginAtZero: false,
+            min: 0,
+            max: 100,
+            title: { display: true, text: '成绩' }
+          }
+        }
+      }
+    });
+  })();
+</script>
+{% endif %}
+
+{% include "partials/footer.html" %}

@@ -1,0 +1,76 @@
+{% include "partials/header.html" %}
+
+<div class="top-bar">
+  <div>
+    <h1 class="page-title">班级管理</h1>
+    <p class="page-subtitle">管理班级信息、学员名单和课程安排</p>
+  </div>
+  <div class="top-actions">
+    <a href="/classes/new" class="btn btn-primary">
+      <svg class="icon"><use href="#icon-plus"/></svg>
+      新增班级
+    </a>
+  </div>
+</div>
+
+<div class="table-card">
+  <div class="table-header">
+    <div class="table-title">班级列表</div>
+  </div>
+  
+  {% if classes %}
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>班级名称</th>
+        <th>级次</th>
+        <th>年级</th>
+        <th>科目</th>
+        <th>教师</th>
+        <th>人数上限</th>
+        <th>状态</th>
+        <th style="text-align: right;">操作</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for class in classes %}
+      <tr data-href="/classes/{{ class.id }}">
+        <td>
+          <div style="font-weight: 600; color: var(--text-primary);">{{ class.name }}</div>
+        </td>
+        <td>{{ class.cohort }}级</td>
+        <td>{{ class.grade }}</td>
+        <td>{{ class.subject }}</td>
+        <td>{{ class.teacher_name }}</td>
+        <td>{{ class.max_students }}</td>
+        <td>
+          {% if class.status == 'active' %}
+            <span class="badge badge-green">正常</span>
+          {% else %}
+            <span class="badge badge-gray">已结课</span>
+          {% endif %}
+        </td>
+        <td style="text-align: right;">
+          <a href="/classes/{{ class.id }}/edit" class="btn btn-sm btn-secondary" style="margin-right: 8px;">
+            <svg class="icon"><use href="#icon-edit"/></svg>
+          </a>
+          <form action="/classes/{{ class.id }}/delete" method="post" style="display: inline;" data-confirm="确定删除该班级吗？">
+            <button type="submit" class="btn btn-sm btn-danger">
+              <svg class="icon"><use href="#icon-trash"/></svg>
+            </button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-state-icon">🏫</div>
+    <h3>暂无班级</h3>
+    <p>点击右上角新增按钮创建第一个班级</p>
+  </div>
+  {% endif %}
+</div>
+
+{% include "partials/footer.html" %}

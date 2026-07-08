@@ -1,0 +1,33 @@
+{% include "partials/header.html" %}
+
+<div class="top-bar">
+  <div>
+    <h1 class="page-title">导入作业成绩</h1>
+    <p class="page-subtitle">{{ assignment.title }} · {{ assignment.class_name }}</p>
+  </div>
+</div>
+
+<div class="card" style="margin-bottom: 24px;">
+  <div class="section-title">使用说明</div>
+  <p style="color: var(--text-secondary); line-height: 1.8;">
+    <strong>CSV 格式要求：</strong>第一行为表头，需包含 <code>姓名</code> 和 <code>得分</code> 列。<br>
+    <strong>示例：</strong><br>
+    <code style="background: var(--bg-secondary); padding: 2px 8px; border-radius: 4px;">姓名,得分</code><br>
+    <code style="background: var(--bg-secondary); padding: 2px 8px; border-radius: 4px;">张三,95</code><br>
+    <code style="background: var(--bg-secondary); padding: 2px 8px; border-radius: 4px;">李四,88</code><br>
+    导入后，<strong>未在 CSV 中出现的学员将自动标注为"未提交"</strong>。
+  </p>
+</div>
+
+<form method="post" action="/assignments/{{ assignment.id }}/import-scores" class="form-card">
+  <div class="form-group">
+    <label class="form-label">粘贴 CSV 内容</label>
+    <textarea name="csv_data" class="form-textarea" style="min-height: 200px; font-family: monospace;" placeholder="姓名,得分&#10;张三,95&#10;李四,88" required></textarea>
+  </div>
+  <div class="flex items-center gap-4 mt-4">
+    <button type="submit" class="btn btn-primary">导入成绩</button>
+    <a href="/assignments/{{ assignment.id }}" class="btn btn-secondary">返回作业详情</a>
+  </div>
+</form>
+
+{% include "partials/footer.html" %}

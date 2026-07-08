@@ -1,0 +1,123 @@
+{% include "partials/header.html" %}
+
+<div class="top-bar">
+  <div>
+    <h1 class="page-title">学员管理</h1>
+    <p class="page-subtitle">按“级”管理学员，自动关联毕业届次</p>
+  </div>
+  <div class="top-actions">
+    <a href="/students/import" class="btn btn-secondary">批量导入</a>
+    <a href="/students/batch" class="btn btn-secondary">批量操作</a>
+    <a href="/students/new" class="btn btn-primary">
+      <svg class="icon"><use href="#icon-plus"/></svg>
+      新增学员
+    </a>
+  </div>
+</div>
+
+<div class="filter-bar">
+  <form method="get" class="flex items-center gap-2" style="flex-wrap: wrap;">
+    <div class="search-box">
+      <svg class="icon" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%);"><use href="#icon-search"/></svg>
+      <input type="text" name="search" class="filter-input" placeholder="搜索姓名/手机/学校" value="{{ search }}">
+    </div>
+    <select name="cohort" class="filter-input">
+      <option value="">全部级次</option>
+      {% for c in cohorts %}
+        <option value="{{ c }}" {% if c == cohort %}selected{% endif %}>{{ c }}级</option>
+      {% endfor %}
+    </select>
+    <select name="grade" class="filter-input">
+      <option value="">全部年级</option>
+      <option value="高一" {% if grade == '高一' %}selected{% endif %}>高一</option>
+      <option value="高二" {% if grade == '高二' %}selected{% endif %}>高二</option>
+      <option value="高三" {% if grade == '高三' %}selected{% endif %}>高三</option>
+    </select>
+    <select name="status" class="filter-input">
+      <option value="">全部状态</option>
+      <option value="registered" {% if status == 'registered' %}selected{% endif %}>已报名</option>
+      <option value="active" {% if status == 'active' %}selected{% endif %}>在读</option>
+      <option value="inactive" {% if status == 'inactive' %}selected{% endif %}>已退学</option>
+    </select>
+    <button type="submit" class="btn btn-secondary">筛选</button>
+  </form>
+</div>
+
+<div class="table-card">
+  <div class="table-header">
+    <div class="table-title">学员列表（共 {{ total }} 人）</div>
+  </div>
+
+  {% if students %}
+  <table class="data-table" id="students-table">
+    <thead>
+      <tr>
+        <th>姓名</th>
+        <th>级次</th>
+        <th>毕业届</th>
+        <th>当前年级</th>
+        <th>学校</th>
+        <th>联系电话</th>
+        <th>状态</th>
+        <th style="text-align: right;">操作</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for student in students %}
+      <tr data-href="/students/{{ student.id }}">
+        <td>
+          <div style="font-weight: 600; color: var(--text-primary);">{{ student.name }}</div>
+        </td>
+        <td>{{ student.cohort }}级</td>
+        <td>{{ student.graduation_year }}届</td>
+        <td>{{ student.grade }}</td>
+        <td>{{ student.school }}</td>
+        <td>{{ student.phone }}</td>
+        <td>
+          {% if student.status == 'registered' %}
+            <span class="badge badge-blue">已报名</span>
+          {% endif %}
+          {% if student.status == 'active' %}
+            <span class="badge badge-green">在读</span>
+          {% endif %}
+          {% if student.status == 'inactive' %}
+            <span class="badge badge-gray">已退学</span>
+          {% endif %}
+        </td>
+        <td style="text-align: right;">
+          <a href="/students/{{ student.id }}/edit" class="btn btn-sm btn-secondary" style="margin-right: 8px;">
+            <svg class="icon"><use href="#icon-edit"/></svg>
+          </a>
+          <form action="/students/{{ student.id }}/delete" method="post" style="display: inline;" data-confirm="确定删除该学员吗？">
+            <button type="submit" class="btn btn-sm btn-danger">
+              <svg class="icon"><use href="#icon-trash"/></svg>
+            </button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if total_pages > 1 %}
+  <div class="pagination">
+    {% if page > 1 %}
+      <a href="?search={{ search }}&cohort={{ cohort }}&grade={{ grade }}&status={{ status }}&page={{ prev_page }}" class="page-link">上一页</a>
+    {% endif %}
+    <span class="page-link active">{{ page }} / {{ total_pages }}</span>
+    {% if page < total_pages %}
+      <a href="?search={{ search }}&cohort={{ cohort }}&grade={{ grade }}&status={{ status }}&page={{ next_page }}" class="page-link">下一页</a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-state-icon">👨‍🎓</div>
+    <h3>暂无学员</h3>
+    <p>点击右上角新增按钮添加第一位学员</p>
+  </div>
+  {% endif %}
+</div>
+
+{% include "partials/footer.html" %}

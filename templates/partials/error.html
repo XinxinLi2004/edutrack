@@ -1,0 +1,16 @@
+{% include "partials/header.html" %}
+
+<div class="top-bar">
+  <div>
+    <h1 class="page-title">操作失败</h1>
+    <p class="page-subtitle">请检查输入后重试</p>
+  </div>
+</div>
+
+<div class="card" style="text-align: center; padding: 60px 40px;">
+  <div class="empty-state-icon" style="font-size: 4rem; margin-bottom: 20px;">⚠️</div>
+  <h3 style="margin-bottom: 16px; color: var(--danger-color);">{{ message }}</h3>
+  <a href="{{ back_url }}" class="btn btn-primary">返回</a>
+</div>
+
+{% include "partials/footer.html" %}
