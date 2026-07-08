@@ -1,4 +1,4 @@
-# 理学优课学员管理系统 — 项目文档
+# EduFlow — 项目文档
 
 > 版本 v2.0 | 2026-07-08 | 零外部依赖 · 本地离线运行
 
@@ -6,7 +6,7 @@
 
 ## 1. 项目概览
 
-**理学优课学员管理系统** 是一个面向教培行业的本地学员管理工具，支持学员档案、班级管理、课程排期、成绩分析、作业跟踪、出勤记录和缴费管理等核心教务功能。
+**EduFlow** 是一个面向教培行业的本地学员管理工具，支持学员档案、班级管理、课程排期、成绩分析、作业跟踪、出勤记录和缴费管理等核心教务功能。
 
 ### 技术栈
 
@@ -45,10 +45,10 @@ open http://localhost:3000
 
 ```bash
 # 双击运行或终端启动
-./dist/理学优课学员管理系统
+./dist/EduFlow
 
 # macOS 安全提示处理
-xattr -dr com.apple.quarantine "dist/理学优课学员管理系统"
+xattr -dr com.apple.quarantine "dist/EduFlow"
 ```
 
 ### 数据备份
@@ -83,7 +83,7 @@ xattr -dr com.apple.quarantine "dist/理学优课学员管理系统"
 │   ├── attendances/           # 出勤模块（1个模板）
 │   └── payments/              # 缴费模块（2个模板）
 ├── dist/
-│   ├── 理学优课学员管理系统    # 打包后的可执行程序
+│   ├── EduFlow    # 打包后的可执行程序
 │   └── data/database.sqlite   # 运行时数据库
 └── build/                     # PyInstaller 构建中间文件
 ```
@@ -412,7 +412,7 @@ a = Analysis(['app.py'], datas=[
     ('static', 'static'),         # 静态资源打包进可执行文件
     ('data', 'data'),             # 初始数据目录
 ])
-# 输出：dist/理学优课学员管理系统
+# 输出：dist/EduFlow
 ```
 
 运行时：模板/静态从 `_MEIPASS`（临时解压目录）读取，数据库从可执行文件同级 `data/` 目录读写。
@@ -747,7 +747,7 @@ pyinstaller student-system.spec --clean
 
 # 输出目录
 ls dist/
-# → 理学优课学员管理系统
+# → EduFlow
 # → data/database.sqlite
 ```
 

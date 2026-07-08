@@ -1,4 +1,4 @@
-# 理学优课学员管理系统
+# EduFlow
 
 面向教培行业的本地学员管理工具。零外部依赖，Python 标准库实现，支持 macOS / Windows / Linux。
 
@@ -49,7 +49,7 @@ open http://localhost:3000
 # 2. 双击运行
 build_windows.bat
 
-# 输出：dist/理学优课学员管理系统.exe
+# 输出：dist/EduFlow.exe
 ```
 
 ## macOS 打包
@@ -63,4 +63,4 @@ pyinstaller student-system.spec --clean
 
 ## 许可
 
-MIT License
+[CC BY-NC-SA 4.0](LICENSE) — 署名-非商业性使用-相同方式共享。允许自由使用、修改和分享，但禁止商业用途，使用时必须注明来源。

@@ -2,10 +2,10 @@
 chcp 65001 >nul 2>&1
 setlocal enabledelayedexpansion
 cd /d "%~dp0"
-title 理学优课学员管理系统 - 打包工具
+title EduFlow - 打包工具
 
 echo ========================================
-echo   理学优课学员管理系统 - Windows 打包
+echo   EduFlow - Windows 打包
 echo ========================================
 echo.
 
@@ -81,7 +81,7 @@ echo.
 
 :: ====== 第3步：打包 ======
 echo [3/4] 开始打包（约 1-2 分钟）...
-if exist "dist\理学优课学员管理系统.exe" del /f /q "dist\理学优课学员管理系统.exe"
+if exist "dist\EduFlow.exe" del /f /q "dist\EduFlow.exe"
 
 !PYTHON_CMD! -m PyInstaller student-system.spec --clean --noconfirm
 if !errorlevel! neq 0 (
@@ -100,12 +100,12 @@ echo.
 
 :: ====== 第4步：验证 ======
 echo [4/4] 验证...
-if exist "dist\理学优课学员管理系统.exe" (
+if exist "dist\EduFlow.exe" (
     echo.
     echo ========================================
     echo   打包成功！
     echo.
-    echo   输出：dist\理学优课学员管理系统.exe
+    echo   输出：dist\EduFlow.exe
     echo.
     echo   双击 EXE 即可启动（浏览器自动打开）
     echo   首次运行自动创建数据库，无需额外配置

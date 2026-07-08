@@ -28,7 +28,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='理学优课学员管理系统',
+    name='EduFlow',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

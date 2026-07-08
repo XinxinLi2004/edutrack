@@ -140,7 +140,7 @@ def seed_data():
             'title': course_titles[i],
             'scheduled_at': course_time.strftime('%Y-%m-%dT%H:%M'),
             'duration': 120,
-            'location': '理学优课教室' + random.choice(['A', 'B']) if mode != 'online' else '腾讯会议 123-456-789',
+            'location': 'EduFlow教室' + random.choice(['A', 'B']) if mode != 'online' else '腾讯会议 123-456-789',
             'mode': mode,
             'status': 'planned' if i > 2 else 'completed',
             'description': '系统复习重点知识点'
