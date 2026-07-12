@@ -83,7 +83,7 @@ echo.
 echo [3/4] 开始打包（约 1-2 分钟）...
 if exist "dist\EduFlow.exe" del /f /q "dist\EduFlow.exe"
 
-!PYTHON_CMD! -m PyInstaller student-system.spec --clean --noconfirm
+!PYTHON_CMD! -m PyInstaller Eduflow.spec --clean --noconfirm
 if !errorlevel! neq 0 (
     echo.
     echo [X] 打包失败

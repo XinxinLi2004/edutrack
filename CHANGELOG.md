@@ -95,6 +95,19 @@ Eduflow 学员管理系统 — 变更记录
 | `python3 -m py_compile app.py` 语法检查 | ✅ |
 | `python3 -m py_compile database.py` 语法检查 | ✅ |
 
+### ⚡ 打包更新
+
+**PyInstaller 配置重构** (`student-system.spec` → `Eduflow.spec`)
+- spec 文件重命名为 `Eduflow.spec`，与项目名称一致
+- 入口 `app.py`，静态资源 `templates/` + `static/` + `data/` 打包进可执行程序
+- 输出：`dist/EduFlow`（macOS arm64, 9.2MB）
+
+**构建脚本与配置**
+- `build_windows.bat`：spec 路径更新为 `Eduflow.spec`
+- `package.json`：name → `eduflow`, version → `2.1.0`, 新增 `npm run build` 脚本
+- `PROJECT.md` / `使用说明.md`：全部 `student-system.spec` 引用更新为 `Eduflow.spec`
+- `README.md`：统一打包章节，补充 macOS 首次运行安全提示
+
 ### ⚠️ 已知遗留 TODO
 
 | 优先级 | 事项 | 说明 |

@@ -63,7 +63,7 @@ xattr -dr com.apple.quarantine "dist/EduFlow"
 ├── app.py                     # 主程序入口（~1455行）
 ├── database.py                # 数据库操作层（~1544行）
 ├── seed.py                    # 测试数据生成（~217行）
-├── student-system.spec        # PyInstaller 打包配置
+├── Eduflow.spec               # PyInstaller 打包配置
 ├── data/
 │   └── database.sqlite        # SQLite 数据库文件
 ├── static/
@@ -403,7 +403,7 @@ else:
 | 作业   | 4   | 按班级分配，截止日期依次递延7天                     |
 | 缴费   | 25  | 金额随机(3000/4500/6000/8000)，类型随机，含欠费逾期 |
 
-### 4.4 student-system.spec — PyInstaller 配置
+### 4.4 Eduflow.spec — PyInstaller 配置
 
 ```python
 # 入口脚本
@@ -743,7 +743,7 @@ def get_xxx(id):
 pip install pyinstaller
 
 # 打包
-pyinstaller student-system.spec --clean
+pyinstaller Eduflow.spec --clean
 
 # 输出目录
 ls dist/

@@ -1,11 +1,12 @@
 {
-  "name": "student-management-system",
-  "version": "1.0.0",
+  "name": "eduflow",
+  "version": "2.1.0",
   "description": "教培行业学员管理系统 - 本地离线版（Python 标准库实现）",
   "main": "app.py",
   "scripts": {
     "start": "python3 app.py",
-    "seed": "python3 seed.py"
+    "seed": "python3 seed.py",
+    "build": "python3 -m PyInstaller Eduflow.spec --clean --noconfirm"
   },
   "keywords": [
     "student",
@@ -14,6 +15,6 @@
     "sqlite",
     "python"
   ],
-  "author": "资深开发工程师（Senior Developer）",
-  "license": "MIT"
+  "author": "李老师",
+  "license": "CC BY-NC-SA 4.0"
 }

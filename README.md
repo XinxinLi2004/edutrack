@@ -46,7 +46,17 @@ open http://localhost:3000
 
 **零外部 Python 依赖**，无需 `pip install`。打包后的可执行文件内置 Python 运行时。
 
-## Windows 打包
+## 打包发布
+
+### macOS / Linux
+
+```bash
+pip install pyinstaller
+pyinstaller Eduflow.spec --clean
+# 输出：dist/EduFlow
+```
+
+### Windows
 
 ```bash
 # 1. 安装 Python 3.9+（python.org）
@@ -56,14 +66,9 @@ build_windows.bat
 # 输出：dist/EduFlow.exe
 ```
 
-## macOS 打包
+首次运行 macOS 打包程序若提示"无法验证开发者"：`xattr -dr com.apple.quarantine dist/EduFlow`
 
-```bash
-pip install pyinstaller
-pyinstaller student-system.spec --clean
-```
-
-详细文档见：[PROJECT.md](PROJECT.md) | [使用说明](使用说明.md)
+详细文档见：[PROJECT.md](PROJECT.md) | [使用说明](使用说明.md) | [工作日志](CHANGELOG.md)
 
 ## 许可
 
