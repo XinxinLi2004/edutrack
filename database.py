@@ -16,6 +16,7 @@ def smart_csv_read(text):
     """智能读取 CSV：自动识别分隔符（逗号/Tab/空格），返回 csv.reader"""
     if not text or not text.strip():
         return csv.reader(io.StringIO(''))
+    text = text.lstrip('\ufeff')  # 去除 UTF-8 BOM，避免表头首列被 \ufeff 污染导致匹配失败
     # 取前几行作为嗅探样本
     sample = '\n'.join(text.strip().split('\n')[:5])
     try:

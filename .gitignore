@@ -36,5 +36,9 @@ data/*.bak.*
 /tmp/
 generated-images/
 
+# Test data generators & fixtures (not for distribution)
+gen_*.py
+*_test.csv
+
 # Secrets
 .secrets.baseline

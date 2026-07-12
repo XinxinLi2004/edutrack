@@ -6,6 +6,7 @@
   <title>{{ title }} - EduFlow</title>
   <link rel="stylesheet" href="/static/css/style.css">
   <script defer src="/static/js/app.js"></script>
+  <link rel="icon" type="image/png" href="/static/images/logo.png">
   <style>
     .icon {
       width: 1.2em;
@@ -44,7 +45,7 @@
     <aside class="sidebar">
       <div class="sidebar-header">
         <div class="logo">
-          <div class="logo-icon">📚</div>
+          <div class="logo-icon"><img src="/static/images/logo.png" alt="EduFlow"></div>
           <span>EduFlow</span>
         </div>
         <div class="sidebar-subtitle">学员管理系统</div>
@@ -89,6 +90,9 @@
         EduFlow · 学员管理系统 v1.0
       </div>
     </aside>
+
+    <!-- 移动端侧边栏遮罩 -->
+    <div class="sidebar-overlay" aria-hidden="true"></div>
 
     <!-- 主内容 -->
     <main class="main-content">

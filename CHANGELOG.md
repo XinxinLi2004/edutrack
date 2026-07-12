@@ -4,32 +4,113 @@ Eduflow 学员管理系统 — 变更记录
 
 ---
 
+## [v2.2] — 2026-07-12 · 前端视觉重构
+
+> 范围：纯视觉层升级。**不改动任何 API 调用、状态管理与数据流**，所有模板内联 `style="var(--xxx)"` 依赖既有 CSS 变量名，变量名全部保留、仅调优取值，实现零模板改动即全站升级。
+
+### 🎨 设计系统 (`static/css/style.css`)
+
+- **去 AI 味**：移除全部蓝紫渐变（按钮、active 导航、图表、旧 LOGO 图标），统一为单色蓝色渐变 `#2563eb → #1d4ed8`
+- **紫色语义化**：`--purple-color` 仅保留为状态色（`.stat-icon.purple` / `.badge-purple`），不再用于装饰性渐变
+- **色彩升级**：侧边栏加深为 `#0f172a` 提升对比度；暗色模式阴影改用更强不透明度并保留蓝色着色
+- **字体层级**：字体栈新增中文回退 `PingFang SC / Hiragino Sans GB / Microsoft YaHei`；标题字号 `clamp()` 流体响应；数字 `tabular-nums` 对齐
+- **阴影系统**：新增 `--shadow-md / --shadow-primary` 等层次化阴影（蓝色着色、更柔和），卡片/hover 层次更清晰
+- **圆角规范**：新增 `--radius-xl: 20px`，统一大容器圆角
+- **间距节奏**：卡片/网格间距统一为 8px 倍数的节奏
+
+### ⚡ 交互增强 (`static/js/app.js`)
+
+- 保留原有全部逻辑：主题切换、侧边栏开关、删除确认、表格行跳转、Toast、CSV 导出
+- 新增 **滚动揭示动效**：`IntersectionObserver` 对 `.card / .stat-card / .table-card / .detail-section / .section-title` 进入视口时自底部淡入
+- 不支持 `IntersectionObserver` 时直接展示；并设 **2.5s 安全兜底**确保内容可见
+- 按钮新增按压缩放反馈（`transform: scale(0.97)`）
+- 移动端新增 `.sidebar-overlay` 遮罩，点击关闭侧边栏；窗口 resize 回到桌面宽度时自动关闭移动菜单
+
+### 🖼️ 品牌资产
+
+- 使用 AI 生图生成品牌 LOGO：`static/images/logo.png`（1024×1024，蓝色圆角方形 + 毕业帽 + 上升箭头，契合教育成长主题）
+- `templates/partials/header.html`：侧边栏 `.logo-icon` 接入真实 LOGO 图片、新增 favicon 引用
+- 移除旧 emoji 占位图标 📚
+
+### 🧩 模板微调（功能零破坏）
+
+- `templates/partials/header.html`：新增 `.sidebar-overlay` 遮罩层
+- `templates/partials/footer.html`：新增内联脚本，页面解析完成时立即为可动画元素添加 `.reveal` 类、为 `<html>` 添加 `.js` 类 —— 避免无 JS 时内容隐藏，并减少 FOUC
+
+### ♿ 无障碍与性能
+
+- 统一 `:focus-visible` 蓝环（链接/按钮/输入/导航项）
+- 尊重系统 `prefers-reduced-motion`，自动禁用过渡与揭示动画
+- 所有过渡基于 `transform / opacity`，不触发重排，性能不下降
+
+### 📱 响应式细化
+
+- 桌面（>1024px）：260px 固定侧边栏
+- 平板（≤1024px）：侧边栏改为可滑出 + 遮罩层；卡片变窄
+- 手机（≤640px）：卡片单列、按钮全宽、详情行纵向排列、表格横向滚动、顶部栏纵向布局
+
+### 🧪 验收结果
+
+| 验收项                                          | 结果 |
+| -------------------------------------------- | -- |
+| `node --check static/js/app.js` 语法检查          | ✅  |
+| CSS 大括号 / 圆括号平衡                           | ✅  |
+| 首页 `/` → 200                               | ✅  |
+| `/students` `/classes` `/courses` `/payments` → 200 | ✅  |
+| 静态资源 `/static/css/style.css` `/static/js/app.js` `/static/images/logo.png` → 200 | ✅  |
+| JS 数据钩子保留（`data-href` / `data-confirm`）      | ✅  |
+| 服务端运行日志无报错                               | ✅  |
+
+### ⚠️ 已知遗留 TODO
+
+| 优先级 | 事项                      | 说明                                                                 |
+| --- | ----------------------- | ------------------------------------------------------------------ |
+| 🟢  | 内联样式系统化              | 仪表盘等页面的 `style="..."` 可重构为 CSS 工具类/局部，降低后续维护成本                      |
+| 🟢  | LOGO 矢量版              | 当前为 PNG 位图，可补充 SVG/高分辨率源文件用于印刷与大屏                             |
+| 🟢  | 其它页面 reveal 目标补充     | footer 已自动覆盖主要卡片类，各详情/表单页可进一步指定 `.reveal` 目标                     |
+
+### ⚡ 打包
+
+- **macOS 可执行程序**：`dist/EduFlow`（arm64, 12MB），内置 Python 运行时，双击即可启动
+- **Windows 源码分发包**：`dist/EduFlow-v2.2.0-windows-src.zip`（958KB），解压后双击 `build_windows.bat` 一键编译为 .exe
+- PyInstaller 不支持 macOS→Windows 交叉编译，Windows 用户需在 Windows 上执行 `build_windows.bat`
+- `package.json` → v2.2.0，`pyproject.toml` → v2.2.0
+
+### ⚠️ 已知遗留 TODO
+
+---
+
 ## [v2.1] — 2026-07-12 · 安全加固与 Bug 修复
 
 ### 🔴 安全修补 (Critical)
 
 **S1 · 修复路径穿越漏洞** (`app.py` serve_static, 行 468–502)
+
 - 静态文件根目录由 `ASSETS_DIR` 改为 `STATIC_DIR`
 - 新增 `os.path.realpath` 归一化 + containment 校验，越界文件一律 404
 - 剥离 `/static/` 前缀后做 join，防止 `../` 穿越
 - 验证：`/static/../data/database.sqlite` → 404, `/static/../app.py` → 404
 
 **S2 · 绑定回环地址** (`app.py` run_server, 行 1481)
+
 - 监听地址 `0.0.0.0` → `127.0.0.1`
 - 本地离线应用无需暴露内网，与 S1 配合缩小攻击面
 
 **S3 · 安全声明** (`README.md`)
+
 - 新增醒目安全提示：当前无用户鉴权，仅限本地单机使用，禁止公网部署
 
 ### 🔧 Bug 修复
 
 **毕业届次计算不一致** (`database.py` migrate_db, 行 64–70)
+
 - `graduation = (cohort + 2) % 100` → `compute_graduation_year(cohort)`
 - 统一使用 cohort + 3（高中三年制），与 `create_student` 主逻辑一致
 - 注意陷阱：`compute_graduation_year` 返回字符串 `'29'`，不能套 `f'{graduation:02d}'`
 - 验证：26级→29届, 25级→28届, 24级→27届
 
 **Query 参数 int 转换无保护** (`app.py` 多处)
+
 - 新增 `AppHandler._safe_int(value, default=0)` 静态方法
 - 替换 8 处裸 `int()` 调用：
   - `students_page` — page 参数
@@ -39,41 +120,46 @@ Eduflow 学员管理系统 — 变更记录
   - `payments_page` — student_id 参数
   - `grades_export` — class_id 参数
   - `class_students_manage` — student_id（表单/查询）
-  - `attendance_save` — key.replace('status_', '') 解析
+  - `attendance_save` — key.replace('status\_', '') 解析
 - 非数字输入（如 ?page=abc）不再触发 500，安全降级为默认值
 
 ### 📦 可移植性
 
 **package.json** (行 7–8)
+
 - `start`/`seed` 脚本路径由开发者机器绝对路径 → 通用 `python3`
 - 分发后 `npm start` 可在任何安装 Python 3.9+ 的机器运行
 
 **overview.md** (行 55–57)
+
 - 同步去除硬编码路径
 
 **README.md**
+
 - 补充环境要求：Python 3.9+（推荐 3.10+）
 
 ### 🧹 工作空间清理
 
-| 操作 | 目标 | 原因 |
-|------|------|------|
-| 删除 | `2026-07-04-08-49-52/`（14 文件） | 项目副本，与根目录完全重复 |
-| 删除 | `memory/`（2 文件） | 误置的记忆目录（正确定位在 .workbuddy/memory/） |
-| 删除 | `generated-images/`（3 图片） | AI 生成临时文件 |
-| 删除 | `student-system-windows.zip` | 构建产物 |
-| 删除 | `data/database.sqlite.bak.*` | 含学员 PII 的数据库备份 |
-| 更新 | `.gitignore` | 新增 `*.sqlite`、`*.zip`、`data/*.bak.*`、`generated-images/` |
-| git rm | `data/database.sqlite` | 已入库的 PII 数据库，从版本库移除（保留本地文件） |
-| git rm | `student-system-windows.zip` | 构建产物，从版本库移除 |
+| 操作     | 目标                            | 原因                                                       |
+| ------ | ----------------------------- | -------------------------------------------------------- |
+| 删除     | `2026-07-04-08-49-52/`（14 文件） | 项目副本，与根目录完全重复                                            |
+| 删除     | `memory/`（2 文件）               | 误置的记忆目录（正确定位在 .workbuddy/memory/）                        |
+| 删除     | `generated-images/`（3 图片）     | AI 生成临时文件                                                |
+| 删除     | `student-system-windows.zip`  | 构建产物                                                     |
+| 删除     | `data/database.sqlite.bak.*`  | 含学员 PII 的数据库备份                                           |
+| 更新     | `.gitignore`                  | 新增 `*.sqlite`、`*.zip`、`data/*.bak.*`、`generated-images/` |
+| git rm | `data/database.sqlite`        | 已入库的 PII 数据库，从版本库移除（保留本地文件）                              |
+| git rm | `student-system-windows.zip`  | 构建产物，从版本库移除                                              |
 
 ### ✨ 功能增强（参考 Edutrack）
 
 **仪表盘** (`templates/index.html`)
+
 - 近期课程卡片新增上课方式标识（线上/线下/混合同步 badge）
 - 底部新增「快捷操作」区域：添加学员、新建班级、排课、成绩/作业/缴费快捷入口
 
 **工程化文件就绪**
+
 - `pyproject.toml` — ruff / mypy / bandit / pytest 配置
 - `.pre-commit-config.yaml` — pre-commit hooks 配置
 - `.github/workflows/code-review.yml` — CI 代码审查流水线
@@ -85,24 +171,26 @@ Eduflow 学员管理系统 — 变更记录
 
 ### 🧪 验收结果
 
-| 验收项 | 结果 |
-|--------|------|
-| 路径穿越 `/static/../data/database.sqlite` → 404 | ✅ |
-| 路径穿越 `/static/../app.py` → 404 | ✅ |
-| 正常静态资源 `/static/css/style.css` → 200 | ✅ |
-| 首页 `/` → 200 | ✅ |
-| 毕业届次 26级→29届 | ✅ |
-| `python3 -m py_compile app.py` 语法检查 | ✅ |
-| `python3 -m py_compile database.py` 语法检查 | ✅ |
+| 验收项                                          | 结果 |
+| -------------------------------------------- | -- |
+| 路径穿越 `/static/../data/database.sqlite` → 404 | ✅  |
+| 路径穿越 `/static/../app.py` → 404               | ✅  |
+| 正常静态资源 `/static/css/style.css` → 200         | ✅  |
+| 首页 `/` → 200                                 | ✅  |
+| 毕业届次 26级→29届                                 | ✅  |
+| `python3 -m py_compile app.py` 语法检查          | ✅  |
+| `python3 -m py_compile database.py` 语法检查     | ✅  |
 
 ### ⚡ 打包更新
 
 **PyInstaller 配置重构** (`student-system.spec` → `Eduflow.spec`)
+
 - spec 文件重命名为 `Eduflow.spec`，与项目名称一致
 - 入口 `app.py`，静态资源 `templates/` + `static/` + `data/` 打包进可执行程序
 - 输出：`dist/EduFlow`（macOS arm64, 9.2MB）
 
 **构建脚本与配置**
+
 - `build_windows.bat`：spec 路径更新为 `Eduflow.spec`
 - `package.json`：name → `eduflow`, version → `2.1.0`, 新增 `npm run build` 脚本
 - `PROJECT.md` / `使用说明.md`：全部 `student-system.spec` 引用更新为 `Eduflow.spec`
@@ -110,13 +198,13 @@ Eduflow 学员管理系统 — 变更记录
 
 ### ⚠️ 已知遗留 TODO
 
-| 优先级 | 事项 | 说明 |
-|--------|------|------|
-| 🟡 | 补单测 | `database.py` 纯函数（compute_graduation_year, _to_int, CSV 解析）覆盖率为 0 |
-| 🟡 | 接 pre-commit + CI | `pyproject.toml` 和 `.pre-commit-config.yaml` 已就绪，需接入仓库 |
-| 🟡 | 跑 ruff 清理存量 | pyproject.toml 有 ruff 配置，未执行过 |
-| 🟢 | 拆分 app.py / database.py | 单文件过大（~1500行），长期可考虑按业务域拆模块 |
-| 🟢 | API 接口文档 | /api/* 路由暂无文档说明 |
+| 优先级 | 事项                      | 说明                                                                 |
+| --- | ----------------------- | ------------------------------------------------------------------ |
+| 🟡  | 补单测                     | `database.py` 纯函数（compute_graduation_year, \_to_int, CSV 解析）覆盖率为 0 |
+| 🟡  | 接 pre-commit + CI       | `pyproject.toml` 和 `.pre-commit-config.yaml` 已就绪，需接入仓库             |
+| 🟡  | 跑 ruff 清理存量             | pyproject.toml 有 ruff 配置，未执行过                                      |
+| 🟢  | 拆分 app.py / database.py | 单文件过大（~1500行），长期可考虑按业务域拆模块                                         |
+| 🟢  | API 接口文档                | /api/* 路由暂无文档说明                                                    |
 
 ---
 

@@ -1,4 +1,13 @@
     </main>
   </div>
+  <script>
+    // 立即为 HTML 添加 js 类，并为可动画元素添加 reveal 类，避免无 JS 时内容隐藏，同时减少 FOUC。
+    (function() {
+      document.documentElement.classList.add('js');
+      document.querySelectorAll('.card, .stat-card, .table-card, .detail-section, .section-title').forEach(function(el) {
+        el.classList.add('reveal');
+      });
+    })();
+  </script>
 </body>
 </html>

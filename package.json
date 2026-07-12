@@ -1,6 +1,6 @@
 {
   "name": "eduflow",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "教培行业学员管理系统 - 本地离线版（Python 标准库实现）",
   "main": "app.py",
   "scripts": {
