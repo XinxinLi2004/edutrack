@@ -1,0 +1,43 @@
+# Eduflow 本地提交门禁
+# 用法：pip install pre-commit && pre-commit install
+# 之后每次 git commit 会自动跑下面所有检查，失败则拦截提交
+repos:
+  # ---- Python：ruff 格式化 + lint（一体化，极快）----
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.6.9
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  # ---- 通用：检测密钥/敏感信息误提交 ----
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: ['--baseline', '.secrets.baseline']
+
+  # ---- 通用：禁止提交大文件/合并残留 ----
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+        args: ['--maxkb=500']
+
+  # ---- 前端：Prettier 格式化 ----
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v3.1.0
+    hooks:
+      - id: prettier
+        types_or: [javascript, jsx, ts, tsx, json, css, scss, html, markdown]
+
+  # ---- 前端：ESLint ----
+  - repo: https://github.com/pre-commit/mirrors-eslint
+    rev: v9.9.0
+    hooks:
+      - id: eslint
+        files: \.(js|jsx|ts|tsx)$
+        args: ['--fix']

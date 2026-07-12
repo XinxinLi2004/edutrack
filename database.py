@@ -63,10 +63,11 @@ def migrate_db():
     for row in cursor.fetchall():
         if not row['cohort'] and row['grade'] in GRADE_TO_COHORT_OFFSET:
             cohort = (current_year + GRADE_TO_COHORT_OFFSET[row['grade']]) % 100
-            graduation = (cohort + 2) % 100
+            cohort_str = f'{cohort:02d}'
+            graduation_str = compute_graduation_year(cohort)
             cursor.execute(
                 'UPDATE students SET cohort = ?, graduation_year = ? WHERE id = ?',
-                (f'{cohort:02d}', f'{graduation:02d}', row['id'])
+                (cohort_str, graduation_str, row['id'])
             )
 
     cursor.execute('SELECT id, grade, cohort FROM classes')

@@ -4,8 +4,8 @@
   "description": "教培行业学员管理系统 - 本地离线版（Python 标准库实现）",
   "main": "app.py",
   "scripts": {
-    "start": "/Users/seikaya/.workbuddy/binaries/python/versions/3.13.12/bin/python3 app.py",
-    "seed": "/Users/seikaya/.workbuddy/binaries/python/versions/3.13.12/bin/python3 seed.py"
+    "start": "python3 app.py",
+    "seed": "python3 seed.py"
   },
   "keywords": [
     "student",

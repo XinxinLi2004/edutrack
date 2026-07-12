@@ -1,0 +1,11 @@
+{
+  "extends": ["stylelint-config-standard"],
+  "rules": {
+    "indentation": 2,
+    "no-empty-source": true,
+    "color-hex-length": "short",
+    "declaration-block-no-duplicate-properties": true,
+    "no-duplicate-selectors": true
+  },
+  "ignoreFiles": ["dist/**", "node_modules/**", "build/**"]
+}

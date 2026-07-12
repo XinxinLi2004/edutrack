@@ -52,8 +52,8 @@
 
 ### 开发模式
 ```bash
-/Users/seikaya/.workbuddy/binaries/python/versions/3.13.12/bin/python3 seed.py
-/Users/seikaya/.workbuddy/binaries/python/versions/3.13.12/bin/python3 app.py
+python3 seed.py
+python3 app.py
 ```
 
 ### 打包版本

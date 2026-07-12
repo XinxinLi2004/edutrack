@@ -15,10 +15,26 @@ build/
 .vscode/
 .idea/
 
-# Database backups
+# Database (含学员 PII，切勿入库)
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+data/*.sqlite
+data/*.sqlite-*
 data/*.bak.*
 *.db-journal
+
+# Build artifacts
+*.zip
+*.exe
+
+# Package managers
+/node_modules/
 
 # Temp files
 *.tmp
 /tmp/
+generated-images/
+
+# Secrets
+.secrets.baseline

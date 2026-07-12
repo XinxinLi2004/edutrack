@@ -1,0 +1,84 @@
+# Eduflow Python 工具链配置
+# 工具：ruff(格式化+lint) / mypy(类型) / bandit(安全) / pytest(测试)
+# 安装：pip install ruff mypy bandit pip-audit pytest pytest-cov
+
+[project]
+name = "eduflow"
+version = "0.1.0"
+description = "Eduflow 后端服务"
+requires-python = ">=3.10"
+
+[tool.ruff]
+# 统一行宽
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+# 启用的规则集（覆盖风格/错误/复杂度/文档/安全）
+select = [
+    "E",    # pycodestyle 错误
+    "W",    # pycodestyle 警告
+    "F",    # pyflakes（未定义/未使用）
+    "I",    # isort 导入排序
+    "B",    # flake8-bugbear（常见 Bug 模式）
+    "C4",   # flake8-comprehensions
+    "C90",  # 圈复杂度（mccabe）
+    "N",    # pep8-naming 命名
+    "D",    # pydocstyle 文档字符串
+    "S",    # flake8-bandit 安全
+    "UP",   # pyupgrade 现代化写法
+    "SIM",  # flake8-simplify
+    "RUF",  # ruff 自带
+]
+ignore = [
+    "D203",  # 与 D211 冲突
+    "D213",  # 与 D212 冲突
+    "S101",  # 允许使用 assert（测试/调试场景）
+    "C901",  # 复杂度单独用 mccabe 控制，这里不整体报错
+]
+
+# 圈复杂度阈值：单函数复杂度超过 10 报警
+[tool.ruff.lint.mccabe]
+max-complexity = 10
+
+# 文档字符串约定
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+# 忽略不需要文档字符串的文件/函数
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["D"]
+"*/__init__.py" = ["D104"]
+"migrations/*" = ["D"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+# ---------- mypy 类型检查 ----------
+[tool.mypy]
+python_version = "3.10"
+strict = false
+warn_unused_ignores = true
+warn_redundant_casts = true
+disallow_untyped_defs = false
+ignore_missing_imports = true
+
+# ---------- bandit 安全扫描 ----------
+[tool.bandit]
+skips = ["B101"]  # 允许 assert
+exclude_dirs = ["tests", "migrations"]
+
+# ---------- pytest 测试与覆盖率 ----------
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-q"
+
+[tool.coverage.run]
+source = ["app", "src"]
+omit = ["tests/*", "*/migrations/*"]
+
+[tool.coverage.report]
+fail_under = 60
+show_missing = true

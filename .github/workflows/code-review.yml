@@ -1,0 +1,50 @@
+# Eduflow 代码审查 CI 门禁
+# 触发：PR 到 main 时自动跑；任一 job 失败则禁止合并
+name: code-review
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - name: 安装 Python 工具
+        run: pip install ruff mypy bandit pip-audit pytest pytest-cov
+      - name: Ruff 检查（lint）
+        run: ruff check .
+      - name: Ruff 格式化检查
+        run: ruff format --check .
+      - name: 类型检查
+        run: mypy app src 2>/dev/null || true   # 渐进式：先不阻断，配齐注解后改为非零退出
+      - name: 安全扫描
+        run: bandit -r app src -ll
+      - name: 依赖漏洞审计
+        run: pip-audit
+      - name: 单测与覆盖率
+        run: pytest --cov=app --cov=src --cov-fail-under=60
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: 安装前端依赖
+        run: npm ci || npm install
+      - name: 格式化检查
+        run: npx prettier --check "**/*.{js,jsx,ts,tsx,json,css,scss,html}"
+      - name: ESLint
+        run: npx eslint "**/*.{js,jsx,ts,tsx}" --max-warnings=0
+      - name: stylelint
+        run: npx stylelint "**/*.css" || true   # 有 CSS 时启用
+      - name: 依赖漏洞
+        run: npm audit --audit-level=high || true

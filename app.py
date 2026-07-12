@@ -363,6 +363,16 @@ class AppHandler(BaseHTTPRequestHandler):
         """静默日志，减少输出干扰"""
         pass
     
+    @staticmethod
+    def _safe_int(value, default=0):
+        """安全整数转换，非数字返回默认值（防 500）"""
+        if value is None or value == '':
+            return default
+        try:
+            return int(value)
+        except (ValueError, TypeError):
+            return default
+    
     def do_GET(self):
         parsed = urllib.parse.urlparse(self.path)
         path = parsed.path
@@ -466,9 +476,17 @@ class AppHandler(BaseHTTPRequestHandler):
         self.send_error(404)
     
     def serve_static(self, path):
-        """提供静态文件"""
-        file_path = os.path.join(ASSETS_DIR, path.lstrip('/'))
-        if not os.path.exists(file_path) or not os.path.isfile(file_path):
+        """提供静态文件，严格限定在 STATIC_DIR 内，防路径穿越"""
+        # 剥离 /static/ 前缀
+        rel = path
+        for prefix in ('/static/', 'static/'):
+            if rel.startswith(prefix):
+                rel = rel[len(prefix):]
+                break
+        # 归一化 + containment 校验
+        file_path = os.path.realpath(os.path.join(STATIC_DIR, rel.lstrip('/')))
+        static_root = os.path.realpath(STATIC_DIR)
+        if not file_path.startswith(static_root + os.sep) or not os.path.isfile(file_path):
             self.send_error(404)
             return
         
@@ -549,7 +567,7 @@ class AppHandler(BaseHTTPRequestHandler):
         grade = query.get('grade', [''])[0]
         cohort = query.get('cohort', [''])[0]
         status = query.get('status', [''])[0]
-        page = int(query.get('page', ['1'])[0])
+        page = self._safe_int(query.get('page', ['1'])[0], default=1)
         per_page = 15
         offset = (page - 1) * per_page
         
@@ -762,7 +780,7 @@ class AppHandler(BaseHTTPRequestHandler):
             result = db.find_student_by_name(student_name.strip())
             if result:
                 student_id = result['id']
-        student_id = int(student_id) if student_id else 0
+        student_id = self._safe_int(student_id, default=0)
         
         if action == 'add' and student_id:
             db.add_student_to_class(class_id, student_id)
@@ -775,14 +793,15 @@ class AppHandler(BaseHTTPRequestHandler):
     
     def courses_page(self, method, match, query):
         class_id = query.get('class_id', [''])[0]
-        courses = db.get_courses(class_id=int(class_id) if class_id else None)
+        class_id_int = self._safe_int(class_id) if class_id else None
+        courses = db.get_courses(class_id=class_id_int)
         classes = db.get_classes()
         
         self.render_page('courses/index.html',
                         active_menu='courses',
                         courses=courses,
                         classes=classes,
-                        selected_class_id=int(class_id) if class_id else None,
+                        selected_class_id=class_id_int,
                         title='课程管理')
     
     def course_new_page(self, method, match, query):
@@ -790,7 +809,7 @@ class AppHandler(BaseHTTPRequestHandler):
         class_id = query.get('class_id', [''])[0]
         self.render_page('courses/form.html',
                         active_menu='courses',
-                        course={'class_id': int(class_id) if class_id else ''},
+                        course={'class_id': self._safe_int(class_id) if class_id else ''},
                         classes=classes,
                         title='新增课程')
     
@@ -873,7 +892,7 @@ class AppHandler(BaseHTTPRequestHandler):
         # data 中可能包含多个 status_xxx / mode_xxx / note_xxx 字段
         for key, value in data.items():
             if key.startswith('status_'):
-                student_id = int(key.replace('status_', ''))
+                student_id = self._safe_int(key.replace('status_', ''))
                 status = value
                 mode = data.get(f'mode_{student_id}', '')
                 note = data.get(f'note_{student_id}', '')
@@ -887,15 +906,17 @@ class AppHandler(BaseHTTPRequestHandler):
         class_id = query.get('class_id', [''])[0]
         exam_name = query.get('exam_name', [''])[0]
         student_id = query.get('student_id', [''])[0]
+        class_id_int = self._safe_int(class_id) if class_id else None
+        student_id_int = self._safe_int(student_id) if student_id else None
 
         grades = db.get_grades(
-            class_id=int(class_id) if class_id else None,
+            class_id=class_id_int,
             exam_name=exam_name if exam_name else None,
-            student_id=int(student_id) if student_id else None
+            student_id=student_id_int
         )
         classes = db.get_classes()
         students = db.get_students(limit=1000)
-        stats = db.get_grade_statistics(class_id=int(class_id) if class_id else None, exam_name=exam_name if exam_name else None)
+        stats = db.get_grade_statistics(class_id=class_id_int, exam_name=exam_name if exam_name else None)
         distribution = db.get_grade_distribution()
 
         # 按班级分组
@@ -914,7 +935,7 @@ class AppHandler(BaseHTTPRequestHandler):
                         grouped_grades=grouped_grades,
                         classes=classes,
                         students=students,
-                        selected_class_id=int(class_id) if class_id else None,
+                        selected_class_id=class_id_int,
                         exam_name=exam_name,
                         student_id=student_id,
                         stats=stats,
@@ -978,8 +999,9 @@ class AppHandler(BaseHTTPRequestHandler):
     def assignments_page(self, method, match, query):
         class_id = query.get('class_id', [''])[0]
         sort_by = query.get('sort', [''])[0]
+        class_id_int = self._safe_int(class_id) if class_id else None
         assignments = db.get_assignments_with_sort(
-            class_id=int(class_id) if class_id else None,
+            class_id=class_id_int,
             sort_by=sort_by if sort_by else None
         )
         classes = db.get_classes()
@@ -997,7 +1019,7 @@ class AppHandler(BaseHTTPRequestHandler):
                         active_menu='assignments',
                         assignments=assignments,
                         classes=classes,
-                        selected_class_id=int(class_id) if class_id else None,
+                        selected_class_id=class_id_int,
                         sort_by=sort_by,
                         title='作业管理')
     
@@ -1139,14 +1161,15 @@ class AppHandler(BaseHTTPRequestHandler):
     
     def attendances_page(self, method, match, query):
         class_id = query.get('class_id', [''])[0]
-        courses = db.get_courses(class_id=int(class_id) if class_id else None)
+        class_id_int = self._safe_int(class_id) if class_id else None
+        courses = db.get_courses(class_id=class_id_int)
         classes = db.get_classes()
         
         self.render_page('attendances/index.html',
                         active_menu='attendances',
                         courses=courses,
                         classes=classes,
-                        selected_class_id=int(class_id) if class_id else None,
+                        selected_class_id=class_id_int,
                         title='出勤记录')
     
     # ===== 缴费管理 =====
@@ -1154,8 +1177,9 @@ class AppHandler(BaseHTTPRequestHandler):
     def payments_page(self, method, match, query):
         student_id = query.get('student_id', [''])[0]
         status = query.get('status', [''])[0]
+        student_id_int = self._safe_int(student_id) if student_id else None
         payments = db.get_payments(
-            student_id=int(student_id) if student_id else None,
+            student_id=student_id_int,
             status=status if status else None
         )
         students = db.get_students(limit=1000)
@@ -1164,7 +1188,7 @@ class AppHandler(BaseHTTPRequestHandler):
                         active_menu='payments',
                         payments=payments,
                         students=students,
-                        selected_student_id=int(student_id) if student_id else None,
+                        selected_student_id=student_id_int,
                         status=status,
                         title='缴费管理')
     
@@ -1433,8 +1457,9 @@ class AppHandler(BaseHTTPRequestHandler):
     def grades_export(self, method, match, query):
         class_id = query.get('class_id', [''])[0]
         exam_name = query.get('exam_name', [''])[0]
+        class_id_int = self._safe_int(class_id) if class_id else None
         content = db.export_grades_to_csv(
-            class_id=int(class_id) if class_id else None,
+            class_id=class_id_int,
             exam_name=exam_name if exam_name else None
         )
         filename = f'grades_export_{datetime.now().strftime("%Y%m%d")}.csv'
@@ -1470,7 +1495,7 @@ class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
 
 
 def run_server(port=3000):
-    server = ThreadingHTTPServer(('0.0.0.0', port), AppHandler)
+    server = ThreadingHTTPServer(('127.0.0.1', port), AppHandler)
     
     # 检查数据库状态
     db_path = db.DATABASE_PATH

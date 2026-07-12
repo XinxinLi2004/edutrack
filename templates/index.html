@@ -91,6 +91,11 @@
           <div style="font-weight: 600; color: var(--text-primary);">{{ course.title }}</div>
           <div style="font-size: 0.85rem; color: var(--text-secondary);">
             {{ course.class_name }} · {{ course.scheduled_at }}
+            {% if course.mode %}
+              <span class="badge badge-{{ 'blue' if course.mode == 'online' else 'green' if course.mode == 'offline' else 'purple' }}" style="margin-left: 6px; font-size: 0.7rem;">
+                {{ '线上' if course.mode == 'online' else '线下' if course.mode == 'offline' else '混合同步' }}
+              </span>
+            {% endif %}
           </div>
         </div>
       {% endfor %}
@@ -100,6 +105,18 @@
         <p>暂无近期课程</p>
       </div>
     {% endif %}
+  </div>
+</div>
+
+<div class="card" style="margin-top: 0;">
+  <div class="section-title">⚡ 快捷操作</div>
+  <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+    <a href="/students/new" class="btn btn-primary">+ 添加学员</a>
+    <a href="/classes/new" class="btn btn-secondary">+ 新建班级</a>
+    <a href="/courses/new" class="btn btn-secondary">+ 排课</a>
+    <a href="/grades" class="btn btn-secondary">📊 成绩管理</a>
+    <a href="/assignments" class="btn btn-secondary">📝 作业管理</a>
+    <a href="/payments" class="btn btn-secondary">💰 缴费管理</a>
   </div>
 </div>
 
