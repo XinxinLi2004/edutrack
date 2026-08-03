@@ -41,12 +41,12 @@ if not defined PYTHON_CMD (
     )
 )
 
-:: --- 1c. 自动安装 Python（带国内镜像） ---
+:: --- 1c. 自动安装 Python（国内镜像，多重兜底） ---
 if "%PYTHON_CMD%"=="" (
     echo   未找到 Python，开始自动安装 v%PYTHON_VERSION% ...
     echo.
 
-    :: 方案A：winget（Windows 自带，最快）
+    :: 方案A：winget（Windows 10/11 自带，最快）
     echo   [方案A] 尝试 winget ...
     winget install Python.Python.3.12 --accept-package-agreements --accept-source-agreements
     if !errorlevel! equ 0 (
@@ -55,8 +55,7 @@ if "%PYTHON_CMD%"=="" (
         exit
     )
 
-    :: winget 失败或无网络 → 用国内镜像下载安装包
-    echo   winget 不可用，切换为镜像下载...
+    echo   winget 不可用，使用镜像下载...
     echo.
 
     :: 下载目录
@@ -64,33 +63,71 @@ if "%PYTHON_CMD%"=="" (
     if not exist "!DL_DIR!" mkdir "!DL_DIR!"
     set "DL_PATH=!DL_DIR!\!PYTHON_INSTALLER!"
 
-    :: 方案B：阿里巴巴 npmmirror 镜像
-    echo   [方案B] 从阿里镜像下载 Python %PYTHON_VERSION% ...
-    echo   地址: https://npmmirror.com/mirrors/python/%PYTHON_VERSION%/!PYTHON_INSTALLER!
-    powershell -NoProfile -Command "[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -Uri 'https://npmmirror.com/mirrors/python/%PYTHON_VERSION%/!PYTHON_INSTALLER!' -OutFile '!DL_PATH!'" >nul 2>&1
+    :: 镜像源列表（按优先级）
+    ::   M1=清华大学 TUNA（直连无重定向，最稳定）
+    ::   M2=华为云（直连无重定向）
+    ::   M3=阿里 npmmirror（有 302 重定向，放最后）
+    set "MIRROR_COUNT=3"
+    set "MIRROR1_NAME=清华大学 TUNA"
+    set "MIRROR1_URL=https://mirrors.tuna.tsinghua.edu.cn/python/%PYTHON_VERSION%/!PYTHON_INSTALLER!"
+    set "MIRROR2_NAME=华为云"
+    set "MIRROR2_URL=https://mirrors.huaweicloud.com/python/%PYTHON_VERSION%/!PYTHON_INSTALLER!"
+    set "MIRROR3_NAME=阿里 npmmirror"
+    set "MIRROR3_URL=https://npmmirror.com/mirrors/python/%PYTHON_VERSION%/!PYTHON_INSTALLER!"
 
-    :: 方案C：清华大学 TUNA 镜像
-    if not exist "!DL_PATH!" (
-        echo   阿里镜像失败，切换清华镜像...
-        echo   地址: https://mirrors.tuna.tsinghua.edu.cn/python/%PYTHON_VERSION%/!PYTHON_INSTALLER!
-        powershell -NoProfile -Command "[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -Uri 'https://mirrors.tuna.tsinghua.edu.cn/python/%PYTHON_VERSION%/!PYTHON_INSTALLER!' -OutFile '!DL_PATH!'" >nul 2>&1
-    )
+    :: 逐个镜像尝试：PowerShell → curl → certutil
+    for /L %%M in (1,1,!MIRROR_COUNT!) do (
+        if not exist "!DL_PATH!" (
+            set "MNAME=!MIRROR%%M_NAME!"
+            set "MURL=!MIRROR%%M_URL!"
+            echo   [方案B%%M] !MNAME! ...
+            echo   URL: !MURL!
 
-    :: 方案D：华为云镜像
-    if not exist "!DL_PATH!" (
-        echo   清华镜像失败，切换华为云镜像...
-        echo   地址: https://mirrors.huaweicloud.com/python/%PYTHON_VERSION%/!PYTHON_INSTALLER!
-        powershell -NoProfile -Command "[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -Uri 'https://mirrors.huaweicloud.com/python/%PYTHON_VERSION%/!PYTHON_INSTALLER!' -OutFile '!DL_PATH!'" >nul 2>&1
+            :: 方法1：PowerShell Invoke-WebRequest
+            echo     尝试 PowerShell ...
+            powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+                "$ProgressPreference='SilentlyContinue';" ^
+                "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12;" ^
+                "try { Invoke-WebRequest -UseBasicParsing -Uri '!MURL!' -OutFile '!DL_PATH!' -ErrorAction Stop }" ^
+                "catch { exit 1 }" >nul 2>&1
+
+            :: 方法2：curl（Windows 10+ 内置）
+            if not exist "!DL_PATH!" (
+                echo     PowerShell 失败，尝试 curl ...
+                curl -L -o "!DL_PATH!" "!MURL!" --connect-timeout 30 --max-time 300 -# 2>nul
+            )
+
+            :: 方法3：certutil（Windows 7/8 终极兜底）
+            if not exist "!DL_PATH!" (
+                echo     curl 失败，尝试 certutil ...
+                certutil -urlcache -split -f "!MURL!" "!DL_PATH!" >nul 2>&1
+            )
+
+            if exist "!DL_PATH!" (
+                echo     [!MNAME!] 下载成功
+            ) else (
+                echo     [!MNAME!] 下载失败，尝试下一个源...
+            )
+        )
     )
 
     :: 检查下载结果
     if not exist "!DL_PATH!" (
         echo.
-        echo   [X] 所有镜像均下载失败。请手动安装 Python：
-        echo   1. 打开浏览器访问 https://npmmirror.com/mirrors/python/%PYTHON_VERSION%/
-        echo   2. 下载 !PYTHON_INSTALLER!
-        echo   3. 双击运行（务必勾选 "Add Python to PATH"）
-        echo   4. 安装后重新双击 build_windows.bat
+        echo   ============================================
+        echo   [X] 自动下载失败，请手动安装 Python：
+        echo.
+        echo   方案A - 浏览器下载（推荐）：
+        echo     打开 https://mirrors.tuna.tsinghua.edu.cn/python/%PYTHON_VERSION%/
+        echo     下载 !PYTHON_INSTALLER!
+        echo.
+        echo   方案B - winget 命令行：
+        echo     以管理员身份打开 PowerShell，执行：
+        echo     winget install Python.Python.3.12
+        echo.
+        echo   安装时务必勾选底部 "Add Python to PATH"！
+        echo   安装完成后重新双击 build_windows.bat
+        echo   ============================================
         echo.
         pause >nul
         exit

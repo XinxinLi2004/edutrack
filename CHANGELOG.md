@@ -57,12 +57,15 @@ Eduflow 学员管理系统 — 变更记录
 
 ### ⚡ 打包优化
 
-- **macOS**：`dist/EduFlow`（arm64, 12MB）
-- **Windows**：`dist/EduFlow-v2.3.0-windows-src.zip`，含源码 + 一键打包脚本
+- **macOS**：`dist/EduFlow`（arm64, 10MB）
+- **Windows**：`dist/EduFlow-v2.3.0-windows-src.zip`（966KB），含源码 + 一键打包脚本
 - **build_windows.bat 重构**：
-  - Python 自动安装走国内镜像优先：npmmirror → Tsinghua TUNA → 华为云（不再依赖海外官网慢速下载）
-  - PyInstaller pip 安装增加阿里镜像回退（原仅清华）
-  - 升级默认 Python 版本为 3.12.9
+  - Python 自动安装走国内镜像优先：清华大学 TUNA → 华为云 → 阿里 npmmirror
+  - 每个镜像 3 种下载方式兜底：PowerShell → curl（Win10+ 内置）→ certutil（Win7/8 兜底）
+  - 去除 `>nul 2>&1` 错误吞没，失败时显示具体原因
+  - PowerShell 加 `-ExecutionPolicy Bypass` 避免权限拦截、`-UseBasicParsing` 提升兼容性
+  - PyInstaller pip 安装回退链：清华 → 阿里
+  - 默认 Python 版本 3.12.9
 - `package.json` → 2.3.0，`pyproject.toml` → 2.3.0
 
 ---
