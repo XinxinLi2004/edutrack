@@ -415,6 +415,7 @@ class AppHandler(BaseHTTPRequestHandler):
             (r'^/payments$', self.payments_page),
             (r'^/payments/new$', self.payment_new_page),
             (r'^/payments/(\d+)/edit$', self.payment_edit_page),
+            (r'^/rank-compare$', self.rank_compare_page),
             (r'^/api/.*', self.api_handler),
         ]
         
@@ -465,6 +466,7 @@ class AppHandler(BaseHTTPRequestHandler):
             (r'^/payments$', self.payments_create),
             (r'^/payments/(\d+)$', self.payments_update),
             (r'^/payments/(\d+)/delete$', self.payments_delete),
+            (r'^/rank-compare$', self.rank_compare_analyze),
         ]
         
         for pattern, handler in routes:
@@ -1243,6 +1245,227 @@ class AppHandler(BaseHTTPRequestHandler):
         payment_id = int(match.group(1))
         db.delete_payment(payment_id)
         self.redirect('/payments')
+
+    # ===== 排名对比 =====
+
+    @staticmethod
+    def _parse_exam_data(raw_text):
+        """解析成绩文本，返回 {name: score} 字典（按输入顺序，成绩为 float）。
+        自动去除表头行，支持逗号、制表符、空格分隔。
+        """
+        result = {}
+        seen = set()
+        header_keywords = {'姓名', '名字', 'name', '学生', '成绩', '分数', 'score', '得分', '总分'}
+        for line in raw_text.strip().split('\n'):
+            line = line.strip()
+            if not line:
+                continue
+            # 检测分隔符
+            if '\t' in line:
+                parts = line.split('\t')
+            elif ',' in line:
+                parts = line.split(',')
+            else:
+                parts = line.rsplit(None, 1)  # 从右侧按空格分割一次
+            if len(parts) < 2:
+                continue
+            name = parts[0].strip()
+            score_str = parts[1].strip()
+            # 跳过表头行
+            if name.lower() in header_keywords or score_str.lower() in header_keywords:
+                continue
+            try:
+                score = float(score_str)
+            except ValueError:
+                continue
+            key = name
+            if key not in seen:
+                result[key] = score
+                seen.add(key)
+        return result
+
+    @staticmethod
+    def _compute_ranks(scores_dict):
+        """计算排名。返回 {name: rank}，分数高者排名靠前，同分同名次。
+        例：100,100,90 -> 排名 1,1,3
+        """
+        if not scores_dict:
+            return {}
+        sorted_items = sorted(scores_dict.items(), key=lambda x: x[1], reverse=True)
+        ranks = {}
+        current_rank = 1
+        prev_score = None
+        same_rank_count = 0
+        for i, (name, score) in enumerate(sorted_items):
+            if prev_score is not None and score < prev_score:
+                current_rank += same_rank_count
+                same_rank_count = 1
+            else:
+                same_rank_count += 1
+            ranks[name] = current_rank
+            prev_score = score
+        return ranks
+
+    def rank_compare_page(self, method, match, query):
+        """排名对比 GET：显示空输入页"""
+        self.render_page('rank-compare/index.html',
+                        active_menu='rank-compare',
+                        exam1_name='',
+                        exam1_data='',
+                        exam2_name='',
+                        exam2_data='',
+                        title='排名对比')
+
+    def rank_compare_analyze(self, method, match, data):
+        """排名对比 POST：处理分析请求"""
+        exam1_name = data.get('exam1_name', '第一次考试').strip() or '第一次考试'
+        exam2_name = data.get('exam2_name', '第二次考试').strip() or '第二次考试'
+        exam1_raw = data.get('exam1_data', '').strip()
+        exam2_raw = data.get('exam2_data', '').strip()
+
+        sort = data.get('sort', 'rank_change')
+
+        if not exam1_raw or not exam2_raw:
+            self.send_error_page('请同时输入两次考试的成绩数据', '/rank-compare')
+            return
+
+        # 解析成绩
+        scores1 = self._parse_exam_data(exam1_raw)
+        scores2 = self._parse_exam_data(exam2_raw)
+
+        if not scores1 and not scores2:
+            self.send_error_page('未能解析到有效成绩数据，请检查输入格式', '/rank-compare')
+            return
+
+        # 计算排名
+        ranks1 = self._compute_ranks(scores1)
+        ranks2 = self._compute_ranks(scores2)
+
+        # 合并所有姓名，保留首次考试的出现顺序
+        all_names = list(scores1.keys())
+        for name in scores2:
+            if name not in all_names:
+                all_names.append(name)
+
+        # 构建对比结果
+        comparisons = []
+        improved = 0
+        declined = 0
+        unchanged = 0
+        new_only = 0
+        dropped_only = 0
+
+        for name in all_names:
+            has_s1 = name in scores1
+            has_s2 = name in scores2
+
+            if has_s1 and has_s2:
+                score_c = round(scores2[name] - scores1[name], 1)
+                rank_c = ranks1[name] - ranks2[name]  # 正数=排名上升（进步）
+                is_new = False
+                is_dropped = False
+
+                if rank_c > 0:
+                    improved += 1
+                elif rank_c < 0:
+                    declined += 1
+                else:
+                    unchanged += 1
+
+                comparisons.append({
+                    'name': name,
+                    'score1': scores1[name],
+                    'rank1': ranks1[name],
+                    'score2': scores2[name],
+                    'rank2': ranks2[name],
+                    'score_change': score_c,
+                    'rank_change': rank_c,
+                    'abs_rank_change': abs(rank_c) if rank_c != 0 else 0,
+                    'is_new': False,
+                    'is_dropped': False,
+                })
+            elif has_s1 and not has_s2:
+                # 退出（仅第一次有）
+                dropped_only += 1
+                comparisons.append({
+                    'name': name,
+                    'score1': scores1[name],
+                    'rank1': ranks1[name],
+                    'score2': None,
+                    'rank2': None,
+                    'score_change': None,
+                    'rank_change': None,
+                    'abs_rank_change': 0,
+                    'is_new': False,
+                    'is_dropped': True,
+                })
+            elif not has_s1 and has_s2:
+                # 新增（仅第二次有）
+                new_only += 1
+                comparisons.append({
+                    'name': name,
+                    'score1': None,
+                    'rank1': None,
+                    'score2': scores2[name],
+                    'rank2': ranks2[name],
+                    'score_change': None,
+                    'rank_change': None,
+                    'abs_rank_change': 0,
+                    'is_new': True,
+                    'is_dropped': False,
+                })
+
+        # 排序
+        if sort == 'name':
+            comparisons.sort(key=lambda c: c['name'])
+        elif sort == 'rank1':
+            def rank1_key(c):
+                if c['is_new']:
+                    return float('inf')
+                return c['rank1']
+            comparisons.sort(key=rank1_key)
+        elif sort == 'score_change':
+            def sc_key(c):
+                if c['score_change'] is None:
+                    return float('-inf')
+                return -c['score_change']  # 正变化在前
+            comparisons.sort(key=sc_key)
+        elif sort == 'rank2':
+            def rank2_key(c):
+                if c['is_dropped']:
+                    return float('inf')
+                return c['rank2']
+            comparisons.sort(key=rank2_key)
+        else:  # rank_change
+            def rc_key(c):
+                if c['rank_change'] is None:
+                    return float('-inf')
+                return -c['rank_change']  # 进步最多的在前
+            comparisons.sort(key=rc_key)
+
+        # 添加序号
+        for i, c in enumerate(comparisons):
+            c['index'] = i + 1
+
+        total = len(comparisons)
+
+        self.render_page('rank-compare/index.html',
+                        active_menu='rank-compare',
+                        exam1_name=exam1_name,
+                        exam1_data=exam1_raw,
+                        exam2_name=exam2_name,
+                        exam2_data=exam2_raw,
+                        comparisons=comparisons,
+                        sort=sort,
+                        stats={
+                            'total': total,
+                            'improved': improved,
+                            'declined': declined,
+                            'unchanged': unchanged,
+                            'new_only': new_only,
+                            'dropped_only': dropped_only,
+                        },
+                        title='排名对比')
 
     # ===== 学员批量操作 =====
 

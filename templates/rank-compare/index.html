@@ -1,0 +1,332 @@
+{% include "partials/header.html" %}
+
+<div class="top-bar">
+  <div>
+    <h1 class="page-title">排名进退步分析</h1>
+    <p class="page-subtitle">输入两次考试成绩（姓名 成绩），自动生成排名对比表</p>
+  </div>
+</div>
+
+<form method="post" action="/rank-compare" class="reveal">
+  <div class="form-card" style="margin-bottom: 24px;">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+      <!-- 第一次考试 -->
+      <div>
+        <div class="form-group">
+          <label class="form-label">第一次考试名称</label>
+          <input type="text" name="exam1_name" class="form-input" placeholder="例如：期中考试" value="{{ exam1_name }}" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">成绩数据 <span style="color: var(--text-muted); font-weight: 400;">（每行一条：姓名 成绩）</span></label>
+          <textarea name="exam1_data" class="form-input" rows="12" placeholder="张三 95&#10;李四 88&#10;王五 92&#10;...&#10;&#10;支持用逗号、空格或Tab分隔" required>{{ exam1_data }}</textarea>
+        </div>
+      </div>
+
+      <!-- 第二次考试 -->
+      <div>
+        <div class="form-group">
+          <label class="form-label">第二次考试名称</label>
+          <input type="text" name="exam2_name" class="form-input" placeholder="例如：期末考试" value="{{ exam2_name }}" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">成绩数据 <span style="color: var(--text-muted); font-weight: 400;">（每行一条：姓名 成绩）</span></label>
+          <textarea name="exam2_data" class="form-input" rows="12" placeholder="张三 92&#10;李四 90&#10;王五 88&#10;...&#10;&#10;支持用逗号、空格或Tab分隔" required>{{ exam2_data }}</textarea>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; justify-content: center; margin-top: 20px;">
+      <button type="submit" class="btn btn-primary" style="padding: 12px 48px; font-size: 1rem;">
+        <svg class="icon" style="width: 1.1em; height: 1.1em;"><use href="#icon-search"/></svg>
+        开始对比分析
+      </button>
+    </div>
+
+    <div style="margin-top: 12px; text-align: center;">
+      <span style="font-size: 0.8rem; color: var(--text-muted);">
+        支持格式：姓名 成绩 / 姓名,成绩 / 姓名<TAB>成绩。每行一条记录，自动去除表头行。
+      </span>
+    </div>
+  </div>
+</form>
+
+{% if comparisons %}
+<!-- ===== 分析结果 ===== -->
+
+<!-- 概览统计 -->
+<div class="card-grid" style="grid-template-columns: repeat(5, 1fr);">
+  <div class="stat-card reveal">
+    <div class="stat-icon blue">
+      <svg class="icon"><use href="#icon-students"/></svg>
+    </div>
+    <div class="stat-info">
+      <div class="stat-value">{{ stats.total }}</div>
+      <div class="stat-label">对比总人数</div>
+    </div>
+  </div>
+  <div class="stat-card reveal">
+    <div class="stat-icon green">
+      <svg class="icon" style="transform: rotate(-45deg);"><use href="#icon-edit"/></svg>
+    </div>
+    <div class="stat-info">
+      <div class="stat-value">{{ stats.improved }}</div>
+      <div class="stat-label">排名上升</div>
+    </div>
+  </div>
+  <div class="stat-card reveal">
+    <div class="stat-icon red">
+      <svg class="icon" style="transform: rotate(45deg);"><use href="#icon-edit"/></svg>
+    </div>
+    <div class="stat-info">
+      <div class="stat-value">{{ stats.declined }}</div>
+      <div class="stat-label">排名下降</div>
+    </div>
+  </div>
+  <div class="stat-card reveal">
+    <div class="stat-icon orange">
+      <svg class="icon"><use href="#icon-dashboard"/></svg>
+    </div>
+    <div class="stat-info">
+      <div class="stat-value">{{ stats.unchanged }}</div>
+      <div class="stat-label">排名不变</div>
+    </div>
+  </div>
+  <div class="stat-card reveal">
+    <div class="stat-icon purple">
+      <svg class="icon"><use href="#icon-assignments"/></svg>
+    </div>
+    <div class="stat-info">
+      <div class="stat-value">{{ stats.new_only }}{% if stats.new_only > 0 or stats.dropped_only > 0 %}<span style="font-size: 0.6em; color: var(--text-muted);"> / {{ stats.dropped_only }}</span>{% endif %}</div>
+      <div class="stat-label">新增 / 退出</div>
+    </div>
+  </div>
+</div>
+
+<!-- 排序切换 -->
+<div class="reveal" style="margin-bottom: 16px;">
+  <div class="filter-bar" style="margin-bottom: 0; justify-content: flex-start; gap: 8px;">
+    <span style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 600; margin-right: 8px;">排序：</span>
+    <button type="button" onclick="sortTable('rank_change')" class="btn btn-sm btn-primary sort-btn" data-sort="rank_change">按排名变化</button>
+    <button type="button" onclick="sortTable('score_change')" class="btn btn-sm btn-secondary sort-btn" data-sort="score_change">按分数变化</button>
+    <button type="button" onclick="sortTable('name')" class="btn btn-sm btn-secondary sort-btn" data-sort="name">按姓名</button>
+    <button type="button" onclick="sortTable('rank1')" class="btn btn-sm btn-secondary sort-btn" data-sort="rank1">按第一次排名</button>
+    <button type="button" onclick="sortTable('rank2')" class="btn btn-sm btn-secondary sort-btn" data-sort="rank2">按第二次排名</button>
+  </div>
+</div>
+
+<!-- 对比表格 -->
+<div class="table-card reveal" id="results">
+  <div class="table-header">
+    <span class="table-title">{{ exam1_name }} vs {{ exam2_name }} — 排名进退步明细</span>
+    <span style="font-size: 0.8rem; color: var(--text-muted);">共 {{ comparisons|length }} 人</span>
+  </div>
+  <div style="overflow-x: auto;">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th style="width: 80px;">序号</th>
+          <th>姓名</th>
+          <th style="text-align: right;">{{ exam1_name }}成绩</th>
+          <th style="text-align: right;">排名</th>
+          <th style="text-align: right;">{{ exam2_name }}成绩</th>
+          <th style="text-align: right;">排名</th>
+          <th style="text-align: right;">分数变化</th>
+          <th style="text-align: right;">排名变化</th>
+          <th>趋势</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in comparisons %}
+        <tr>
+          <td>{{ c.index }}</td>
+          <td>
+            <strong>{{ c.name }}</strong>
+            {% if c.is_new %}<span class="badge badge-purple" style="font-size: 0.7rem; margin-left: 6px;">新增</span>{% endif %}
+            {% if c.is_dropped %}<span class="badge badge-orange" style="font-size: 0.7rem; margin-left: 6px;">退出</span>{% endif %}
+          </td>
+          <td style="text-align: right; font-variant-numeric: tabular-nums;">{% if not c.is_new %}{{ c.score1 }}{% else %}<span style="color: var(--text-muted);">--</span>{% endif %}</td>
+          <td style="text-align: right; font-variant-numeric: tabular-nums;">{% if not c.is_new %}{{ c.rank1 }}{% else %}<span style="color: var(--text-muted);">--</span>{% endif %}</td>
+          <td style="text-align: right; font-variant-numeric: tabular-nums;">{% if not c.is_dropped %}{{ c.score2 }}{% else %}<span style="color: var(--text-muted);">--</span>{% endif %}</td>
+          <td style="text-align: right; font-variant-numeric: tabular-nums;">{% if not c.is_dropped %}{{ c.rank2 }}{% else %}<span style="color: var(--text-muted);">--</span>{% endif %}</td>
+          <td style="text-align: right; font-variant-numeric: tabular-nums;">
+            {% if c.score_change == 0 and not c.is_new and not c.is_dropped %}
+              <span style="color: var(--text-muted);">0</span>
+            {% elif c.score_change > 0 %}
+              <span style="color: var(--success-color); font-weight: 600;">+{{ c.score_change }}</span>
+            {% elif c.score_change < 0 %}
+              <span style="color: var(--danger-color); font-weight: 600;">{{ c.score_change }}</span>
+            {% else %}
+              <span style="color: var(--text-muted);">--</span>
+            {% endif %}
+          </td>
+          <td style="text-align: right; font-variant-numeric: tabular-nums;">
+            {% if c.rank_change == 0 and not c.is_new and not c.is_dropped %}
+              <span style="color: var(--text-muted);">0</span>
+            {% elif c.rank_change > 0 %}
+              <span style="color: var(--success-color); font-weight: 700;">+{{ c.rank_change }}</span>
+            {% elif c.rank_change < 0 %}
+              <span style="color: var(--danger-color); font-weight: 700;">{{ c.rank_change }}</span>
+            {% else %}
+              <span style="color: var(--text-muted);">--</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if c.is_new %}
+              <span class="badge badge-purple">新增</span>
+            {% elif c.is_dropped %}
+              <span class="badge badge-orange">退出</span>
+            {% elif c.rank_change > 0 %}
+              <span class="badge badge-green">▲ 上升 {{ c.rank_change }} 名</span>
+            {% elif c.rank_change < 0 %}
+              <span class="badge badge-red">▼ 下降 {{ c.abs_rank_change }} 名</span>
+            {% else %}
+              <span class="badge badge-gray">持平</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- 图例说明 -->
+<div class="reveal" style="margin-top: 16px; padding: 16px 24px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius); display: flex; gap: 20px; flex-wrap: wrap; align-items: center; font-size: 0.85rem;">
+  <span style="font-weight: 600; color: var(--text-primary);">图例：</span>
+  <span class="badge badge-green">▲ 上升 N 名</span>
+  <span style="color: var(--text-muted);">排名上升，有进步</span>
+  <span style="margin-left: 8px;" class="badge badge-red">▼ 下降 N 名</span>
+  <span style="color: var(--text-muted);">排名下降，需关注</span>
+  <span style="margin-left: 8px;" class="badge badge-gray">持平</span>
+  <span style="color: var(--text-muted);">排名未变</span>
+  <span style="margin-left: 8px;" class="badge badge-purple">新增</span>
+  <span style="color: var(--text-muted);">仅第二次考试有成绩</span>
+  <span style="margin-left: 8px;" class="badge badge-orange">退出</span>
+  <span style="color: var(--text-muted);">仅第一次考试有成绩</span>
+</div>
+
+{% else %}
+<!-- 未提交时的使用说明 -->
+<div class="reveal" style="margin-top: 32px;">
+  <div class="card" style="padding: 32px;">
+    <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-primary); margin-bottom: 16px;">使用说明</h3>
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;">
+      <div>
+        <div style="font-size: 0.85rem; font-weight: 700; color: var(--primary-color); margin-bottom: 8px;">1. 输入成绩</div>
+        <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6;">
+          在上方左右两侧分别输入两次考试的名称和成绩数据。每行一条记录，格式为"姓名 成绩"，支持用逗号、空格或Tab分隔。
+        </p>
+      </div>
+      <div>
+        <div style="font-size: 0.85rem; font-weight: 700; color: var(--primary-color); margin-bottom: 8px;">2. 自动匹配</div>
+        <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6;">
+          系统自动根据姓名匹配两次考试的学生，计算排名变化。同名学生会自动去重，新增和退出的学生会被单独标注。
+        </p>
+      </div>
+      <div>
+        <div style="font-size: 0.85rem; font-weight: 700; color: var(--primary-color); margin-bottom: 8px;">3. 查看结果</div>
+        <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6;">
+          点击"开始对比分析"后，系统会生成完整的排名进退步表，包含排名变化、分数变化和趋势分析。支持多种排序方式。
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<script>
+(function() {
+  var currentSort = 'rank_change';
+  var currentDir = 'desc';
+
+  function parseRankChange(row) {
+    var td = row.querySelectorAll('td')[7];
+    if (!td) return null;
+    var span = td.querySelector('span');
+    var text = (span ? span.textContent : td.textContent).trim();
+    if (text === '--') return null;
+    return parseFloat(text);
+  }
+
+  function parseScoreChange(row) {
+    var td = row.querySelectorAll('td')[6];
+    if (!td) return null;
+    var span = td.querySelector('span');
+    var text = (span ? span.textContent : td.textContent).trim();
+    if (text === '--') return null;
+    return parseFloat(text);
+  }
+
+  function parseName(row) {
+    var td = row.querySelectorAll('td')[1];
+    if (!td) return '';
+    return (td.textContent || '').trim();
+  }
+
+  function parseRank1(row) {
+    var td = row.querySelectorAll('td')[3];
+    if (!td) return null;
+    var text = td.textContent.trim();
+    if (text === '--') return Infinity;
+    return parseInt(text) || Infinity;
+  }
+
+  function parseRank2(row) {
+    var td = row.querySelectorAll('td')[5];
+    if (!td) return null;
+    var text = td.textContent.trim();
+    if (text === '--') return Infinity;
+    return parseInt(text) || Infinity;
+  }
+
+  window.sortTable = function(sortKey) {
+    var table = document.querySelector('.data-table tbody');
+    if (!table) return;
+
+    var rows = Array.from(table.querySelectorAll('tr'));
+
+    if (currentSort === sortKey) {
+      currentDir = currentDir === 'asc' ? 'desc' : 'asc';
+    } else {
+      currentSort = sortKey;
+      currentDir = (sortKey === 'rank_change' || sortKey === 'score_change') ? 'desc' : 'asc';
+    }
+
+    var getValue;
+    if (sortKey === 'rank_change') { getValue = parseRankChange; }
+    else if (sortKey === 'score_change') { getValue = parseScoreChange; }
+    else if (sortKey === 'name') { getValue = parseName; }
+    else if (sortKey === 'rank1') { getValue = parseRank1; }
+    else if (sortKey === 'rank2') { getValue = parseRank2; }
+    else { return; }
+
+    // Handle null values (new/dropped students) - push to bottom
+    rows.sort(function(a, b) {
+      var va = getValue(a), vb = getValue(b);
+      if (va === null) va = currentDir === 'asc' ? Infinity : -Infinity;
+      if (vb === null) vb = currentDir === 'asc' ? Infinity : -Infinity;
+      if (va < vb) return currentDir === 'asc' ? -1 : 1;
+      if (va > vb) return currentDir === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    // Re-append sorted rows and re-number
+    rows.forEach(function(row, i) {
+      table.appendChild(row);
+      row.querySelectorAll('td')[0].textContent = (i + 1);
+    });
+
+    // Update button styles
+    document.querySelectorAll('.sort-btn').forEach(function(btn) {
+      var ds = btn.getAttribute('data-sort');
+      if (ds === currentSort) {
+        btn.className = 'btn btn-sm btn-primary sort-btn';
+      } else {
+        btn.className = 'btn btn-sm btn-secondary sort-btn';
+      }
+    });
+  };
+})();
+</script>
+
+{% include "partials/footer.html" %}
